@@ -1,5 +1,5 @@
 import * as functions from "firebase-functions";
-import { LinkTokenCreateRequest } from "plaid";
+import { LinkTokenCreateRequest, Products } from "plaid";
 import { getPlaidClient, PLAID_ANDROID_PACKAGE_NAME, PLAID_COUNTRY_CODES, PLAID_PRODUCTS, PLAID_REDIRECT_URI } from "./plaid";
 
 exports.createLinkToken = functions.https.onRequest(async (req, resp) => {
@@ -25,3 +25,21 @@ exports.createLinkToken = functions.https.onRequest(async (req, resp) => {
     const createTokenResponse = await client.linkTokenCreate(configs);
     resp.json(createTokenResponse.data);
 });
+
+exports.setAccessToken = functions.https.onRequest(async (req, resp) => {
+    const client = getPlaidClient();
+    const tokenResponse = await client.itemPublicTokenExchange({
+        public_token: req.body.public_token,
+    });
+
+    const accessToken = tokenResponse.data.access_token;
+    const itemId = tokenResponse.data.item_id;
+
+    // FIXME: This needs to be stored in Firestore and shouldn't be exposed 
+    //        to the client side.
+    resp.json({
+        access_token: accessToken,
+        item_id: itemId,
+        error: null,
+    });
+})
