@@ -46,7 +46,7 @@ export async function ffSaveSocialAuthToken(
     return result.data;
 }
 
-export async function ffSyncSheet(): Promise<any> {
+export async function ffPopulateData(): Promise<any> {
     const user = getAuth().currentUser;
 
     if (user == null) {
@@ -55,7 +55,7 @@ export async function ffSyncSheet(): Promise<any> {
 
     const idToken = await getIdToken(user);
     const functions = getFunctions(getApp());
-    const fn = httpsCallable(functions, "syncSheet");
+    const fn = httpsCallable(functions, "populateData");
     const result = await fn({ idToken });
     console.log(result);
     return result.data;

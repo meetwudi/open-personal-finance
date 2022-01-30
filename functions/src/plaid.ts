@@ -1,7 +1,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { first } from "lodash";
-import { Configuration, CountryCode, PlaidApi, PlaidEnvironments, Products } from "plaid";
+import { Configuration, CountryCode, PlaidApi, PlaidEnvironments, Products, TransactionsGetResponse } from "plaid";
 import { TEMP_ITEM_ID, TEMP_UID } from "./constants";
 import moment = require("moment");
 
@@ -112,7 +112,7 @@ export async function getAccessTokenX(
   return accessToken;
 }
 
-export async function getTransactions() {
+export async function getTransactions(): Promise<TransactionsGetResponse> {
   // Pull transactions for the Item for the last 30 days
   const startDate = moment().subtract(30, "days").format("YYYY-MM-DD");
   const endDate = moment().format("YYYY-MM-DD");

@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { LinkTokenCreateRequest } from "plaid";
+import { TEMP_ITEM_ID, TEMP_UID } from "./constants";
 import {
   getAccessToken,
   getPlaidClient,
@@ -12,9 +13,9 @@ import {
   setAccessToken
 } from "./plaid";
 import { saveSocialAuthToken } from "./social-auth";
+import syncAccounts from "./syncAccounts";
+import syncGoogleSheet from "./syncGoogleSheet";
 
-import { TEMP_ITEM_ID, TEMP_UID } from "./constants";
-import { syncGoogleSheetPipeline } from "./pipelines";
 
 admin.initializeApp();
 
@@ -82,8 +83,36 @@ exports.saveSocialAuthToken = functions.https.onCall(async (params) => {
   );
 });
 
-exports.syncSheet = functions.https.onCall(async (params) => {
+exports.populateData = functions.https.onCall(async (params) => {
   const txnGetResp = await getTransactions();
-  const op = await syncGoogleSheetPipeline(txnGetResp);
-  await op.run(params.idToken);
+  const ctx = {idToken: params.idToken};
+  await Promise.all([
+    syncGoogleSheet(
+      txnGetResp,
+      ctx,
+    ),
+    syncAccounts(
+      txnGetResp,
+      ctx,
+    )
+  ]);
+});
+
+exports.updateAccountSettings = functions.https.onCall(async (params) => {
+  const {idToken, accountId, syncToSheetEnabled} = params;
+  const claims = await admin.auth().verifyIdToken(idToken);
+
+  await admin.firestore().runTransaction(async (db) => {
+    const collection = admin.firestore().collection("account_settings");
+    const existingDocs = await db.get(collection
+      .where("uid", "==", claims.uid)
+      .where("accountId", "==", accountId));
+
+    if (existingDocs.empty) {
+      db.create(collection.doc(), {syncToSheetEnabled});
+    } else {
+      existingDocs.forEach(
+        (doc) => db.update(doc.ref, {syncToSheetEnabled}));
+    }
+  });
 });
