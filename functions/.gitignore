@@ -7,3 +7,6 @@ typings/
 
 # Node.js dependency directory
 node_modules/
+
+# environment variable script 
+functions/scripts/set-env.sh

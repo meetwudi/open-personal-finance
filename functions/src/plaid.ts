@@ -1,20 +1,23 @@
+import * as admin from "firebase-admin";
+import * as functions from "firebase-functions";
 import { Configuration, CountryCode, PlaidApi, PlaidEnvironments, Products } from "plaid";
 
-const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
-const PLAID_SECRET = process.env.PLAID_SECRET;
-const PLAID_ENV = process.env.PLAID_ENV || 'sandbox';
+
+const PLAID_CLIENT_ID = functions.config().plaid.client_id;
+const PLAID_SECRET = functions.config().plaid.client_secret;
+const PLAID_ENV = functions.config().plaid.env || "sandbox";
 
 // PLAID_PRODUCTS is a comma-separated list of products to use when initializing
 // Link. Note that this list must contain 'assets' in order for the app to be
 // able to create and retrieve asset reports.
-export const PLAID_PRODUCTS = (process.env.PLAID_PRODUCTS || 'transactions').split(
-    ',',
+export const PLAID_PRODUCTS = (functions.config().plaid.products || "transactions").split(
+  ",",
 ) as Products[]; // FIXME: Sketchy type casting without checks
 
 // PLAID_COUNTRY_CODES is a comma-separated list of countries for which users
 // will be able to select institutions from.
-export const PLAID_COUNTRY_CODES = (process.env.PLAID_COUNTRY_CODES || 'US').split(
-    ',',
+export const PLAID_COUNTRY_CODES = (functions.config().plaid.country_codes || "US").split(
+  ",",
 ) as CountryCode[]; // FIXME: Sketchy type casting without checks
 
 // Parameters used for the OAuth redirect Link flow.
@@ -24,22 +27,52 @@ export const PLAID_COUNTRY_CODES = (process.env.PLAID_COUNTRY_CODES || 'US').spl
 // that the bank website should redirect to. You will need to configure
 // this redirect URI for your client ID through the Plaid developer dashboard
 // at https://dashboard.plaid.com/team/api.
-export const PLAID_REDIRECT_URI = process.env.PLAID_REDIRECT_URI || '';
+export const PLAID_REDIRECT_URI = functions.config().plaid.oauth_redirect_uri || "";
 
 // Parameter used for OAuth in Android. This should be the package name of your app,
 // e.g. com.plaid.linksample
-export const PLAID_ANDROID_PACKAGE_NAME = process.env.PLAID_ANDROID_PACKAGE_NAME || '';
+export const PLAID_ANDROID_PACKAGE_NAME = functions.config().plaid.android_package_name || "";
 
-export function getPlaidClient() {
-    const configuration = new Configuration({
-        basePath: PlaidEnvironments[PLAID_ENV],
-        baseOptions: {
-            headers: {
-                'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
-                'PLAID-SECRET': PLAID_SECRET,
-                'Plaid-Version': '2020-09-14',
-            },
-        },
-    });
-    return new PlaidApi(configuration);
+export function getPlaidClient(): PlaidApi {
+  const configuration = new Configuration({
+    basePath: PlaidEnvironments[PLAID_ENV],
+    baseOptions: {
+      headers: {
+        "PLAID-CLIENT-ID": PLAID_CLIENT_ID,
+        "PLAID-SECRET": PLAID_SECRET,
+        "Plaid-Version": "2020-09-14",
+      },
+    },
+  });
+  return new PlaidApi(configuration);
+}
+
+export async function setAccessToken(uid: string, accessToken: string): Promise<void> {
+  await admin.firestore()
+    .collection("access_token")
+    .doc(uid)
+    .set({accessToken});
+}
+
+export async function getAccessToken(uid: string): Promise<string | null> {
+  const doc = await admin.firestore()
+    .collection("access_token")
+    .doc(uid)
+    .get();
+
+  return doc.data()?.accessToken;
+}
+
+export async function getAccessTokenX(uid: string): Promise<string> {
+  const accessToken = await getAccessToken(uid);
+
+
+  if (typeof accessToken !== "string") {
+    throw new functions.https.HttpsError(
+      "internal",
+      "accessToken not found",
+    );
+  }
+
+  return accessToken;
 }
