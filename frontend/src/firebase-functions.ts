@@ -29,3 +29,18 @@ export async function ffGetTransactions(): Promise<any> {
     const result = await fn();
     return result.data;
 }
+
+export async function ffSaveSocialAuthToken(
+    providerId: string,
+    accessToken: string,
+): Promise<any> {
+    const functions = getFunctions(getApp());
+    const fn = httpsCallable(functions, "saveSocialAuthToken");
+
+    // FIXME: Pass idToken here
+    const result = await fn({
+        accessToken,
+        providerId,
+    });
+    return result.data;
+}

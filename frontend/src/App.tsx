@@ -7,6 +7,7 @@ import Context from "./Context";
 
 import styles from "./App.module.scss";
 import { ffCreateLinkToken } from "./firebase-functions";
+import GoogleAuthButton from "./Components/GoogleAuthButton";
 
 const App = () => {
   const { linkSuccess, isItemAccess, dispatch } = useContext(Context);
@@ -61,6 +62,7 @@ const App = () => {
   return (
     <div className={styles.App}>
       <div className={styles.container}>
+        <GoogleAuthButton />
         <Header />
         {linkSuccess && isItemAccess && (
           <>

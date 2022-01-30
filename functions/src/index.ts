@@ -11,6 +11,7 @@ import {
   PLAID_REDIRECT_URI,
   setAccessToken
 } from "./plaid";
+import { saveSocialAuthToken } from "./social-auth";
 
 import moment = require("moment");
 
@@ -94,3 +95,10 @@ exports.getTransactions = functions.https.onCall(async () => {
   return transactionsResponse.data;
 });
 
+exports.saveSocialAuthToken = functions.https.onCall(async (params) => {
+  await saveSocialAuthToken(
+    TEMP_UID,
+    params.providerId,
+    params.accessToken,
+  );
+});
