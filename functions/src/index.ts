@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
+import { google } from "googleapis";
 import { LinkTokenCreateRequest } from "plaid";
 import {
   getAccessToken,
@@ -11,7 +12,7 @@ import {
   PLAID_REDIRECT_URI,
   setAccessToken
 } from "./plaid";
-import { saveSocialAuthToken } from "./social-auth";
+import { getSocialAuthToken, saveSocialAuthToken } from "./social-auth";
 
 import moment = require("moment");
 
@@ -74,7 +75,7 @@ exports.setAccessToken = functions.https.onCall(async (params) => {
   };
 });
 
-exports.getTransactions = functions.https.onCall(async () => {
+const getTransactions = async () => {
   // Pull transactions for the Item for the last 30 days
   const startDate = moment().subtract(30, "days").format("YYYY-MM-DD");
   const endDate = moment().format("YYYY-MM-DD");
@@ -93,7 +94,8 @@ exports.getTransactions = functions.https.onCall(async () => {
   };
   const transactionsResponse = await client.transactionsGet(configs);
   return transactionsResponse.data;
-});
+};
+exports.getTransactions = functions.https.onCall(getTransactions);
 
 exports.saveSocialAuthToken = functions.https.onCall(async (params) => {
   await saveSocialAuthToken(
@@ -101,4 +103,40 @@ exports.saveSocialAuthToken = functions.https.onCall(async (params) => {
     params.providerId,
     params.accessToken,
   );
+});
+
+exports.syncSheet = functions.https.onCall(async (params) => {
+  const oauthClient = new google.auth.OAuth2();
+  const accessToken = await getSocialAuthToken(TEMP_UID, "google.com");
+  oauthClient.setCredentials({
+    access_token: accessToken,
+    id_token: params.idToken,
+  });
+
+  const sheetsApi = google.sheets({
+    version: "v4",
+    auth: oauthClient
+  });
+
+  const sheet = await sheetsApi.spreadsheets.create({
+    requestBody: {}
+  });
+  const transactions = await getTransactions();
+
+  const values = transactions.transactions.map((txn) => ([
+    txn.account_id,
+    txn.authorized_date,
+    txn.amount,
+  ]));
+  await sheetsApi.spreadsheets.values.append({
+    spreadsheetId: sheet.data.spreadsheetId,
+    range: "Sheet1!A1:D1",
+    valueInputOption: "USER_ENTERED",
+    requestBody: {
+      majorDimension: "ROWS",
+      values,
+    }
+  });
+
+  return sheet.data;
 });

@@ -1,4 +1,5 @@
 import { getApp } from "firebase/app";
+import { getAuth, getIdToken } from "firebase/auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
 
 // FIXME: Not used
@@ -42,5 +43,20 @@ export async function ffSaveSocialAuthToken(
         accessToken,
         providerId,
     });
+    return result.data;
+}
+
+export async function ffSyncSheet(): Promise<any> {
+    const user = getAuth().currentUser;
+
+    if (user == null) {
+        throw new Error("User not logged in");
+    }
+
+    const idToken = await getIdToken(user);
+    const functions = getFunctions(getApp());
+    const fn = httpsCallable(functions, "syncSheet");
+    const result = await fn({ idToken });
+    console.log(result);
     return result.data;
 }
