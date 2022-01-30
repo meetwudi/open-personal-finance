@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
+import { first } from "lodash";
 import { Configuration, CountryCode, PlaidApi, PlaidEnvironments, Products } from "plaid";
 
 
@@ -47,24 +48,58 @@ export function getPlaidClient(): PlaidApi {
   return new PlaidApi(configuration);
 }
 
-export async function setAccessToken(uid: string, accessToken: string): Promise<void> {
+export async function setAccessToken(
+  uid: string,
+  itemId: string,
+  accessToken: string,
+): Promise<void> {
   await admin.firestore()
-    .collection("access_token")
+    .collection("plaid_item_access_token")
     .doc(uid)
     .set({accessToken});
+
+  await admin.firestore().runTransaction(async (txn) => {
+    const existingDocQuery = admin.firestore()
+      .collection("plaid_item_access_token")
+      .where("uid", "==", uid)
+      .where("itemId", "==", itemId);
+    const existingDoc = await txn.get(existingDocQuery);
+
+    if (existingDoc.docs.length > 0) {
+      existingDoc.docs.forEach((doc) => txn.update(doc.ref, {
+        accessToken
+      }));
+    } else {
+      txn.create(
+        admin.firestore().collection("plaid_item_access_token").doc(),
+        {
+          accessToken,
+          itemId,
+          uid,
+        }
+      );
+    }
+  });
 }
 
-export async function getAccessToken(uid: string): Promise<string | null> {
-  const doc = await admin.firestore()
-    .collection("access_token")
-    .doc(uid)
+export async function getAccessToken(
+  uid: string,
+  itemId: string,
+): Promise<string | null> {
+  const queryResult = await admin.firestore()
+    .collection("plaid_item_access_token")
+    .where("uid", "==", uid)
+    .where("itemId", "==", itemId)
     .get();
 
-  return doc.data()?.accessToken;
+  return first(queryResult.docs)?.data().accessToken;
 }
 
-export async function getAccessTokenX(uid: string): Promise<string> {
-  const accessToken = await getAccessToken(uid);
+export async function getAccessTokenX(
+  uid: string,
+  itemId: string,
+): Promise<string> {
+  const accessToken = await getAccessToken(uid, itemId);
 
 
   if (typeof accessToken !== "string") {

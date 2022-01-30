@@ -7,6 +7,7 @@ import Error from "../Error";
 import { DataItem, Categories, ErrorDataItem, Data } from "../../dataUtilities";
 
 import styles from "./index.module.scss";
+import { ffGetTransactions } from "../../firebase-functions";
 
 interface Props {
   endpoint: string;
@@ -26,8 +27,16 @@ const Endpoint = (props: Props) => {
 
   const getData = async () => {
     setIsLoading(true);
-    const response = await fetch(`/api/${props.endpoint}`, { method: "GET" });
-    const data = await response.json();
+
+    // FIXME: Sketch hack
+    let data;
+    if (props.endpoint === "transactions") {
+      data = await ffGetTransactions();
+    }
+    else {
+      const response = await fetch(`/api/${props.endpoint}`, { method: "GET" });
+      data = await response.json();
+    }
     if (data.error != null) {
       setError(data.error);
       setIsLoading(false);

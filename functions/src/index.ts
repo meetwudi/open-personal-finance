@@ -8,7 +8,8 @@ import {
   PLAID_ANDROID_PACKAGE_NAME,
   PLAID_COUNTRY_CODES,
   PLAID_PRODUCTS,
-  PLAID_REDIRECT_URI
+  PLAID_REDIRECT_URI,
+  setAccessToken
 } from "./plaid";
 
 import moment = require("moment");
@@ -16,12 +17,13 @@ import moment = require("moment");
 admin.initializeApp();
 
 const TEMP_UID = "temp-uid";
+const TEMP_ITEM_ID = "ITEM_ID";
 
 exports.getInfo = functions.https.onCall(async () => {
-  const accessToken = await getAccessToken(TEMP_UID);
+  const accessToken = await getAccessToken(TEMP_UID, TEMP_ITEM_ID);
 
   return {
-    item_id: "ITEM_ID",
+    item_id: TEMP_ITEM_ID,
     access_token: accessToken,
     products: PLAID_PRODUCTS,
   };
@@ -60,6 +62,8 @@ exports.setAccessToken = functions.https.onCall(async (params) => {
   const accessToken = tokenResponse.data.access_token;
   const itemId = tokenResponse.data.item_id;
 
+  await setAccessToken(TEMP_UID, TEMP_ITEM_ID, accessToken);
+
   // FIXME: This needs to be stored in Firestore and shouldn't be exposed
   //        to the client side.
   return {
@@ -75,7 +79,7 @@ exports.getTransactions = functions.https.onCall(async () => {
   const endDate = moment().format("YYYY-MM-DD");
   const client = getPlaidClient();
 
-  const accessToken = await getAccessTokenX(TEMP_UID);
+  const accessToken = await getAccessTokenX(TEMP_UID, TEMP_ITEM_ID);
 
   const configs = {
     access_token: accessToken,

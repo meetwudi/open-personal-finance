@@ -6,13 +6,13 @@ import Items from "./Components/ProductTypes/Items";
 import Context from "./Context";
 
 import styles from "./App.module.scss";
-import { ffCreateLinkToken, ffGetInfo } from "./firebase-functions";
+import { ffCreateLinkToken } from "./firebase-functions";
 
 const App = () => {
   const { linkSuccess, isItemAccess, dispatch } = useContext(Context);
 
   const generateToken = useCallback(
-    async (paymentInitiation) => {
+    async () => {
       let data;
       try {
         data = await ffCreateLinkToken();
@@ -42,7 +42,6 @@ const App = () => {
 
   useEffect(() => {
     const init = async () => {
-      const { paymentInitiation } = await ffGetInfo(); // used to determine which path to take when generating token
       // do not generate a new token for OAuth redirect; instead
       // setLinkToken from localStorage
       if (window.location.href.includes("?oauth_state_id=")) {
@@ -54,7 +53,7 @@ const App = () => {
         });
         return;
       }
-      generateToken(paymentInitiation);
+      generateToken();
     };
     init();
   }, [dispatch, generateToken]);
