@@ -9,4 +9,4 @@ typings/
 node_modules/
 
 # environment variable script 
-functions/scripts/set-env.sh
+scripts/set-env.sh
