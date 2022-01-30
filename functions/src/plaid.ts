@@ -2,7 +2,8 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { first } from "lodash";
 import { Configuration, CountryCode, PlaidApi, PlaidEnvironments, Products } from "plaid";
-
+import { TEMP_ITEM_ID, TEMP_UID } from "./constants";
+import moment = require("moment");
 
 const PLAID_CLIENT_ID = functions.config().plaid.client_id;
 const PLAID_SECRET = functions.config().plaid.client_secret;
@@ -101,7 +102,6 @@ export async function getAccessTokenX(
 ): Promise<string> {
   const accessToken = await getAccessToken(uid, itemId);
 
-
   if (typeof accessToken !== "string") {
     throw new functions.https.HttpsError(
       "internal",
@@ -110,4 +110,25 @@ export async function getAccessTokenX(
   }
 
   return accessToken;
+}
+
+export async function getTransactions() {
+  // Pull transactions for the Item for the last 30 days
+  const startDate = moment().subtract(30, "days").format("YYYY-MM-DD");
+  const endDate = moment().format("YYYY-MM-DD");
+  const client = getPlaidClient();
+
+  const accessToken = await getAccessTokenX(TEMP_UID, TEMP_ITEM_ID);
+
+  const configs = {
+    access_token: accessToken,
+    start_date: startDate,
+    end_date: endDate,
+    options: {
+      count: 250,
+      offset: 0,
+    },
+  };
+  const transactionsResponse = await client.transactionsGet(configs);
+  return transactionsResponse.data;
 }

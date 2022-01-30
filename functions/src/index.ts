@@ -1,25 +1,22 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import { google } from "googleapis";
 import { LinkTokenCreateRequest } from "plaid";
 import {
   getAccessToken,
-  getAccessTokenX,
   getPlaidClient,
+  getTransactions,
   PLAID_ANDROID_PACKAGE_NAME,
   PLAID_COUNTRY_CODES,
   PLAID_PRODUCTS,
   PLAID_REDIRECT_URI,
   setAccessToken
 } from "./plaid";
-import { getSocialAuthToken, saveSocialAuthToken } from "./social-auth";
+import { saveSocialAuthToken } from "./social-auth";
 
-import moment = require("moment");
+import { TEMP_ITEM_ID, TEMP_UID } from "./constants";
+import { syncGoogleSheetPipeline } from "./pipelines";
 
 admin.initializeApp();
-
-const TEMP_UID = "temp-uid";
-const TEMP_ITEM_ID = "ITEM_ID";
 
 exports.getInfo = functions.https.onCall(async () => {
   const accessToken = await getAccessToken(TEMP_UID, TEMP_ITEM_ID);
@@ -36,9 +33,9 @@ exports.createLinkToken = functions.https.onCall(async () => {
   const configs: LinkTokenCreateRequest = {
     user: {
       // This should correspond to a unique id for the current user.
-      client_user_id: "user-id",
+      client_user_id: TEMP_UID,
     },
-    client_name: "Plaid Quickstart",
+    client_name: "OpenTxSync",
     products: PLAID_PRODUCTS,
     country_codes: PLAID_COUNTRY_CODES,
     language: "en",
@@ -75,26 +72,6 @@ exports.setAccessToken = functions.https.onCall(async (params) => {
   };
 });
 
-const getTransactions = async () => {
-  // Pull transactions for the Item for the last 30 days
-  const startDate = moment().subtract(30, "days").format("YYYY-MM-DD");
-  const endDate = moment().format("YYYY-MM-DD");
-  const client = getPlaidClient();
-
-  const accessToken = await getAccessTokenX(TEMP_UID, TEMP_ITEM_ID);
-
-  const configs = {
-    access_token: accessToken,
-    start_date: startDate,
-    end_date: endDate,
-    options: {
-      count: 250,
-      offset: 0,
-    },
-  };
-  const transactionsResponse = await client.transactionsGet(configs);
-  return transactionsResponse.data;
-};
 exports.getTransactions = functions.https.onCall(getTransactions);
 
 exports.saveSocialAuthToken = functions.https.onCall(async (params) => {
@@ -106,37 +83,7 @@ exports.saveSocialAuthToken = functions.https.onCall(async (params) => {
 });
 
 exports.syncSheet = functions.https.onCall(async (params) => {
-  const oauthClient = new google.auth.OAuth2();
-  const accessToken = await getSocialAuthToken(TEMP_UID, "google.com");
-  oauthClient.setCredentials({
-    access_token: accessToken,
-    id_token: params.idToken,
-  });
-
-  const sheetsApi = google.sheets({
-    version: "v4",
-    auth: oauthClient
-  });
-
-  const sheet = await sheetsApi.spreadsheets.create({
-    requestBody: {}
-  });
-  const transactions = await getTransactions();
-
-  const values = transactions.transactions.map((txn) => ([
-    txn.account_id,
-    txn.authorized_date,
-    txn.amount,
-  ]));
-  await sheetsApi.spreadsheets.values.append({
-    spreadsheetId: sheet.data.spreadsheetId,
-    range: "Sheet1!A1:D1",
-    valueInputOption: "USER_ENTERED",
-    requestBody: {
-      majorDimension: "ROWS",
-      values,
-    }
-  });
-
-  return sheet.data;
+  const txnGetResp = await getTransactions();
+  const op = await syncGoogleSheetPipeline(txnGetResp);
+  await op.run(params.idToken);
 });
