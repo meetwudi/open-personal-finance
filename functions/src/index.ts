@@ -1,7 +1,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { LinkTokenCreateRequest } from "plaid";
-import { TEMP_ITEM_ID, TEMP_UID } from "./constants";
+import { COLLECTION_USER_ACCOUNT_SETTINGS, TEMP_ITEM_ID, TEMP_UID } from "./constants";
 import {
   getAccessToken,
   getPlaidClient,
@@ -98,21 +98,25 @@ exports.populateData = functions.https.onCall(async (params) => {
   ]);
 });
 
-exports.updateAccountSettings = functions.https.onCall(async (params) => {
-  const {idToken, accountId, syncToSheetEnabled} = params;
+exports.updatePlaidAccountSettings = functions.https.onCall(async (params) => {
+  const {idToken, accountId, accountEnabledGlobally} = params;
   const claims = await admin.auth().verifyIdToken(idToken);
 
   await admin.firestore().runTransaction(async (db) => {
-    const collection = admin.firestore().collection("account_settings");
+    const collection = admin.firestore().collection(COLLECTION_USER_ACCOUNT_SETTINGS);
     const existingDocs = await db.get(collection
       .where("uid", "==", claims.uid)
       .where("accountId", "==", accountId));
 
     if (existingDocs.empty) {
-      db.create(collection.doc(), {syncToSheetEnabled});
+      db.create(collection.doc(), {
+        uid: claims.uid,
+        accountId,
+        accountEnabledGlobally,
+      });
     } else {
       existingDocs.forEach(
-        (doc) => db.update(doc.ref, {syncToSheetEnabled}));
+        (doc) => db.update(doc.ref, {accountEnabledGlobally}));
     }
   });
 });

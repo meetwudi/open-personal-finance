@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
 import { TransactionsGetResponse } from "plaid";
+import { COLLECTION_PLAID_FINANCIAL_ACCOUNTS } from "./constants";
 import { ExecutionContext } from "./execution-context";
 
 export default async function syncAccounts(
@@ -7,7 +8,7 @@ export default async function syncAccounts(
   ctx: ExecutionContext,
 ): Promise<void> {
   const claims = await admin.auth().verifyIdToken(ctx.idToken);
-  const collection = admin.firestore().collection("financial_accounts");
+  const collection = admin.firestore().collection(COLLECTION_PLAID_FINANCIAL_ACCOUNTS);
 
   await admin.firestore().runTransaction(async (db) => {
     // Delete existing accounts
