@@ -18,13 +18,16 @@ import syncGoogleSheet from "./syncGoogleSheet";
 
 admin.initializeApp();
 
-exports.createLinkToken = functions.https.onCall(async () => {
+/**
+ * @param {string} params.uid
+ */
+exports.createLinkToken = functions.https.onCall(async (params) => {
   const client = getPlaidClient();
 
   const configs: LinkTokenCreateRequest = {
     user: {
       // This should correspond to a unique id for the current user.
-      client_user_id: TEMP_UID,
+      client_user_id: params.uid,
     },
     client_name: PRODUCT_CODE_NAME,
     products: PLAID_PRODUCTS,
