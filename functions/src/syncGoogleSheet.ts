@@ -3,10 +3,10 @@ import * as functions from "firebase-functions";
 import { google } from "googleapis";
 import { TransactionsGetResponse } from "plaid";
 import { TEMP_UID } from "./constants";
-import dedupTransactions from "./dedupTransactions";
 import { ExecutionContext } from "./execution-context";
+import { dedupTransactions } from "./plaid-agent/transactions";
+import { getEnabledAccounts } from "./plaid-agent/user-plaid-accounts";
 import { getSocialAuthToken } from "./social-auth";
-import { getEnabledAccounts } from "./user-plaid-accounts";
 
 
 export default async function syncGoogleSheet(

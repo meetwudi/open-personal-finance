@@ -20,7 +20,7 @@ export async function ffCreateLinkToken(): Promise<any> {
 export async function ffSetAccessToken(publicToken: string): Promise<any> {
     const functions = getFunctions(getApp());
     const fn = httpsCallable(functions, "setAccessToken");
-    const result = await fn({ public_token: publicToken });
+    const result = await fn(publicToken);
     return result.data;
 }
 

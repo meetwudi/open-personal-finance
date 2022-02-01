@@ -3,17 +3,17 @@ import * as functions from "firebase-functions";
 import { LinkTokenCreateRequest } from "plaid";
 import { COLLECTION_USER_ACCOUNT_SETTINGS, TEMP_ITEM_ID, TEMP_UID } from "./constants";
 import {
+  setAccessToken,
+  syncAccounts,
   getAccessToken,
   getPlaidClient,
   getTransactions,
   PLAID_ANDROID_PACKAGE_NAME,
   PLAID_COUNTRY_CODES,
   PLAID_PRODUCTS,
-  PLAID_REDIRECT_URI,
-  setAccessToken
-} from "./plaid";
+  PLAID_REDIRECT_URI
+} from "./plaid-agent";
 import { saveSocialAuthToken } from "./social-auth";
-import syncAccounts from "./syncAccounts";
 import syncGoogleSheet from "./syncGoogleSheet";
 
 
@@ -53,10 +53,15 @@ exports.createLinkToken = functions.https.onCall(async () => {
   return createTokenResponse.data;
 });
 
-exports.setAccessToken = functions.https.onCall(async (params) => {
+
+/**
+ *
+ * @param {string} public_token - The public token used to exchange for an access token
+ */
+exports.setAccessToken = functions.https.onCall(async (publicToken) => {
   const client = getPlaidClient();
   const tokenResponse = await client.itemPublicTokenExchange({
-    public_token: params.public_token,
+    public_token: publicToken,
   });
 
   const accessToken = tokenResponse.data.access_token;

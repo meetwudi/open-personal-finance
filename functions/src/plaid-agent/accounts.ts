@@ -1,9 +1,9 @@
 import * as admin from "firebase-admin";
 import { TransactionsGetResponse } from "plaid";
-import { COLLECTION_PLAID_FINANCIAL_ACCOUNTS } from "./constants";
-import { ExecutionContext } from "./execution-context";
+import { ExecutionContext } from "../execution-context";
+import { COLLECTION_PLAID_FINANCIAL_ACCOUNTS } from "./collections";
 
-export default async function syncAccounts(
+export async function syncAccounts(
   txnGetResp: TransactionsGetResponse,
   ctx: ExecutionContext,
 ): Promise<void> {
@@ -25,6 +25,7 @@ export default async function syncAccounts(
         name: acc.name,
         officialName: acc.official_name,
         type: acc.type,
+        rawAccount: acc,
       }))
       .forEach((doc) => db.create(collection.doc(), doc));
 

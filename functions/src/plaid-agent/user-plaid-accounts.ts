@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
-import { COLLECTION_PLAID_FINANCIAL_ACCOUNTS, COLLECTION_USER_ACCOUNT_SETTINGS } from "./constants";
+import { COLLECTION_USER_ACCOUNT_SETTINGS } from "../constants";
+import { COLLECTION_PLAID_FINANCIAL_ACCOUNTS } from "./collections";
 
 export async function getEnabledAccounts(
   uid: string,

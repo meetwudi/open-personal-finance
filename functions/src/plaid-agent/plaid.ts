@@ -1,8 +1,11 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { first, flatten, range } from "lodash";
-import { Configuration, CountryCode, PlaidApi, PlaidEnvironments, Products, TransactionsGetResponse } from "plaid";
+import { Configuration, CountryCode, InstitutionsGetByIdResponse, PlaidApi, PlaidEnvironments, Products, TransactionsGetResponse } from "plaid";
+import { COLLECTION_PLAID_ITEM } from "./collections";
 import moment = require("moment");
+import { AxiosResponse } from "axios";
+import { queryExistingItems } from "./items";
 
 const PLAID_CLIENT_ID = functions.config().plaid.client_id;
 const PLAID_SECRET = functions.config().plaid.client_secret;
@@ -53,44 +56,65 @@ export async function setAccessToken(
   itemId: string,
   accessToken: string,
 ): Promise<void> {
-  await admin.firestore()
-    .collection("plaid_item_access_token")
-    .doc(uid)
-    .set({accessToken});
+  const itemsCollection = admin.firestore()
+    .collection(COLLECTION_PLAID_ITEM);
+  const plaidClient = getPlaidClient();
+
+  // Get item and institution
+  const itemResp = await plaidClient.itemGet({
+    client_id: PLAID_CLIENT_ID,
+    secret: PLAID_SECRET,
+    access_token: accessToken
+  });
+
+  const institutionId = itemResp.data.item.institution_id;
+  let institutionResp: AxiosResponse<InstitutionsGetByIdResponse> | null = null;
+  if (institutionId != null) {
+    institutionResp = await plaidClient.institutionsGetById({
+      client_id: PLAID_CLIENT_ID,
+      secret: PLAID_SECRET,
+      institution_id: institutionId,
+      country_codes: [CountryCode.Us],
+    });
+  } else {
+    functions.logger.warn("setAccessToken:emptyInstitutionId", {
+      uid,
+      rawItem: itemResp.data,
+    });
+  }
 
   await admin.firestore().runTransaction(async (txn) => {
-    const existingDocQuery = admin.firestore()
-      .collection("plaid_item_access_token")
-      .where("uid", "==", uid)
-      .where("itemId", "==", itemId);
-    const existingDoc = await txn.get(existingDocQuery);
+    if (institutionId != null) {
+      const existingDoc = await txn.get(queryExistingItems(uid, institutionId));
+      if (!existingDoc.empty) {
+        await Promise.all(existingDoc.docs.map((itemDoc) => {
+          txn.delete(itemDoc.ref);
 
-    if (existingDoc.docs.length > 0) {
-      await Promise.all(existingDoc.docs.map((doc) => {
-        txn.update(doc.ref, {
-          accessToken
-        });
-
-        functions.logger.info("setAccessToken deleted item", {
-          itemId: doc.data().itemId,
-        });
-
-        return getPlaidClient().itemRemove({
-          client_id: PLAID_CLIENT_ID,
-          secret: PLAID_SECRET,
-          access_token: doc.data().accessToken,
-        });
-      }));
-    } else {
-      txn.create(
-        admin.firestore().collection("plaid_item_access_token").doc(),
-        {
-          accessToken,
-          itemId,
-          uid,
-        }
-      );
+          functions.logger.warn("setAccessToken:removeItem", {
+            uid,
+            itemId,
+            institutionId,
+          });
+          return plaidClient.itemRemove({
+            client_id: PLAID_CLIENT_ID,
+            secret: PLAID_SECRET,
+            access_token: accessToken,
+          });
+        }));
+      }
     }
+
+    txn.create(
+      itemsCollection.doc(),
+      {
+        accessToken,
+        itemId,
+        uid,
+        institutionId,
+        rawItem: itemResp.data,
+        rawInstitution: institutionResp?.data,
+      }
+    );
   });
 }
 
@@ -99,7 +123,7 @@ export async function getAccessToken(
   itemId: string,
 ): Promise<string | null> {
   const queryResult = await admin.firestore()
-    .collection("plaid_item_access_token")
+    .collection(COLLECTION_PLAID_ITEM)
     .where("uid", "==", uid)
     .where("itemId", "==", itemId)
     .get();

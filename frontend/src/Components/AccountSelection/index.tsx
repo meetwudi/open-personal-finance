@@ -54,7 +54,7 @@ function AccountSelectionAuthenticated({ user }: PropsAuthenticated) {
             <Form.Check
                 type="checkbox"
                 id={account.data().accountId}
-                label={account.data().name}
+                label={account.data().officialName ?? account.data().name}
                 checked={enabledAccountIds.has(account.data().accountId)}
                 onChange={e => onChangeHandler(e, account.data().accountId)}
             ></Form.Check>
