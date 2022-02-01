@@ -11,20 +11,26 @@ export default async function syncAccounts(
   const collection = admin.firestore().collection(COLLECTION_PLAID_FINANCIAL_ACCOUNTS);
 
   await admin.firestore().runTransaction(async (db) => {
-    // Delete existing accounts
     const existingDocsQuery = collection.where("uid", "==", claims.uid);
     const existingDocs = await db.get(existingDocsQuery);
-    existingDocs.docs.forEach((doc) => db.delete(doc.ref));
+    const existingAccountIds = new Set(existingDocs.docs.map((account) => account.data().accountId));
+    const newAccountIds = new Set(txnGetResp.accounts.map((account) => account.account_id));
 
-    // New documents
-    const docs = txnGetResp.accounts.map((acc) => ({
-      uid: claims.uid,
-      accountId: acc.account_id,
-      name: acc.name,
-      officialName: acc.official_name,
-      type: acc.type,
-    }));
+    // Add new accounts
+    txnGetResp.accounts
+      .filter((account) => !existingAccountIds.has(account.account_id))
+      .map((acc) => ({
+        uid: claims.uid,
+        accountId: acc.account_id,
+        name: acc.name,
+        officialName: acc.official_name,
+        type: acc.type,
+      }))
+      .forEach((doc) => db.create(collection.doc(), doc));
 
-    docs.forEach((doc) => db.create(collection.doc(), doc));
+    // Delete accounts that no longer exist
+    existingDocs.docs.filter(
+      (doc) => !newAccountIds.has(doc.data().accountId)
+    ).forEach((doc) => db.delete(doc.ref));
   });
 }

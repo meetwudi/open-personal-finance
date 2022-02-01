@@ -64,13 +64,10 @@ const App = () => {
         <div>
           <Header />
         </div>
-        {linkSuccess && isItemAccess && (
-          <>
-            <AccountSelection />
-            {/* Plugins */}
-            <GoogleAsyncMultiStep />
-          </>
-        )}
+        <AccountSelection />
+
+        {/* Plugins */}
+        <GoogleAsyncMultiStep />
       </div>
     </div>
   );

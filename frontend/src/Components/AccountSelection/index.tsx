@@ -50,10 +50,10 @@ function AccountSelectionAuthenticated({ user }: PropsAuthenticated) {
     }, []);
 
     return <Form>
-        {accounts?.docs.map(account => <div key={account.id}>
+        {accounts?.docs.map(account => <div key={account.data().accountId}>
             <Form.Check
                 type="checkbox"
-                id={account.id}
+                id={account.data().accountId}
                 label={account.data().name}
                 checked={enabledAccountIds.has(account.data().accountId)}
                 onChange={e => onChangeHandler(e, account.data().accountId)}

@@ -86,16 +86,18 @@ exports.saveSocialAuthToken = functions.https.onCall(async (params) => {
 exports.populateData = functions.https.onCall(async (params) => {
   const txnGetResp = await getTransactions();
   const ctx = {idToken: params.idToken};
-  await Promise.all([
-    syncGoogleSheet(
-      txnGetResp,
-      ctx,
-    ),
-    syncAccounts(
-      txnGetResp,
-      ctx,
-    )
-  ]);
+
+  // Core syncs
+  await syncAccounts(
+    txnGetResp,
+    ctx,
+  );
+
+  // Plugin syncs
+  await syncGoogleSheet(
+    txnGetResp,
+    ctx,
+  );
 });
 
 exports.updatePlaidAccountSettings = functions.https.onCall(async (params) => {

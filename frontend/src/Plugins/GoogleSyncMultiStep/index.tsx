@@ -10,12 +10,7 @@ export default function GoogleAsyncMultiStep() {
     const [user, loadingUser, _errorLoadingUser] = useAuthState(getAuth());
     const { linkSuccess, isItemAccess } = useContext(Context);
 
-    if (!linkSuccess || !isItemAccess) {
-        return <div>
-            <div>Connect with your financial account to countinue</div>
-        </div>
-    }
-    else if (loadingUser) {
+    if (loadingUser) {
         return <div>Loading user ...</div>
     } else if (user == null) {
         return <GoogleAuthButton />;
