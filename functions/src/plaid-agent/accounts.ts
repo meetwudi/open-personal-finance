@@ -4,6 +4,13 @@ import { ExecutionContext } from "../execution-context";
 import { COLLECTION_PLAID_FINANCIAL_ACCOUNTS } from "./collections";
 
 export async function syncAccounts(
+  txnGetResps: TransactionsGetResponse[],
+  ctx: ExecutionContext
+): Promise<void> {
+  await Promise.all(txnGetResps.map((resp) => syncAccountsForItem(resp, ctx)));
+}
+
+async function syncAccountsForItem(
   txnGetResp: TransactionsGetResponse,
   ctx: ExecutionContext,
 ): Promise<void> {

@@ -2,14 +2,6 @@ import { getApp } from "firebase/app";
 import { getAuth, getIdToken } from "firebase/auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
 
-// FIXME: Not used
-export async function ffGetInfo(): Promise<any> {
-    const functions = getFunctions(getApp());
-    const fn = httpsCallable(functions, "getInfo");
-    const result = await fn();
-    return result.data;
-}
-
 export async function ffCreateLinkToken(): Promise<any> {
     const functions = getFunctions(getApp());
     const fn = httpsCallable(functions, "createLinkToken");
@@ -18,9 +10,18 @@ export async function ffCreateLinkToken(): Promise<any> {
 }
 
 export async function ffSetAccessToken(publicToken: string): Promise<any> {
+    const user = getAuth().currentUser;
+
+    if (user == null) {
+        throw new Error("User not logged in");
+    }
+
+    const idToken = await getIdToken(user);
     const functions = getFunctions(getApp());
     const fn = httpsCallable(functions, "setAccessToken");
-    const result = await fn(publicToken);
+
+    const result = await fn({idToken, publicToken});
+
     return result.data;
 }
 
@@ -35,6 +36,13 @@ export async function ffSaveSocialAuthToken(
     providerId: string,
     accessToken: string,
 ): Promise<any> {
+    const user = getAuth().currentUser;
+
+    if (user == null) {
+        throw new Error("User not logged in");
+    }
+
+    const idToken = await getIdToken(user);
     const functions = getFunctions(getApp());
     const fn = httpsCallable(functions, "saveSocialAuthToken");
 
@@ -42,6 +50,7 @@ export async function ffSaveSocialAuthToken(
     const result = await fn({
         accessToken,
         providerId,
+        idToken,
     });
     return result.data;
 }

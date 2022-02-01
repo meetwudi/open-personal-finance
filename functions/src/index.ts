@@ -1,11 +1,10 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { LinkTokenCreateRequest } from "plaid";
-import { COLLECTION_USER_ACCOUNT_SETTINGS, TEMP_ITEM_ID, TEMP_UID } from "./constants";
+import { COLLECTION_USER_ACCOUNT_SETTINGS, PRODUCT_CODE_NAME, TEMP_UID } from "./constants";
 import {
   setAccessToken,
   syncAccounts,
-  getAccessToken,
   getPlaidClient,
   getTransactions,
   PLAID_ANDROID_PACKAGE_NAME,
@@ -19,24 +18,15 @@ import syncGoogleSheet from "./syncGoogleSheet";
 
 admin.initializeApp();
 
-exports.getInfo = functions.https.onCall(async () => {
-  const accessToken = await getAccessToken(TEMP_UID, TEMP_ITEM_ID);
-
-  return {
-    item_id: TEMP_ITEM_ID,
-    access_token: accessToken,
-    products: PLAID_PRODUCTS,
-  };
-});
-
 exports.createLinkToken = functions.https.onCall(async () => {
   const client = getPlaidClient();
+
   const configs: LinkTokenCreateRequest = {
     user: {
       // This should correspond to a unique id for the current user.
       client_user_id: TEMP_UID,
     },
-    client_name: "OpenTxSync",
+    client_name: PRODUCT_CODE_NAME,
     products: PLAID_PRODUCTS,
     country_codes: PLAID_COUNTRY_CODES,
     language: "en",
@@ -55,19 +45,21 @@ exports.createLinkToken = functions.https.onCall(async () => {
 
 
 /**
- *
- * @param {string} public_token - The public token used to exchange for an access token
+ * Params:
+ * @param {string} params.idToken
+ * @param {string} params.publicToken - The public token used to exchange for an access token
  */
-exports.setAccessToken = functions.https.onCall(async (publicToken) => {
+exports.setAccessToken = functions.https.onCall(async (params) => {
   const client = getPlaidClient();
   const tokenResponse = await client.itemPublicTokenExchange({
-    public_token: publicToken,
+    public_token: params.publicToken,
   });
 
   const accessToken = tokenResponse.data.access_token;
   const itemId = tokenResponse.data.item_id;
+  const userClaims = await admin.auth().verifyIdToken(params.idToken);
 
-  await setAccessToken(TEMP_UID, TEMP_ITEM_ID, accessToken);
+  await setAccessToken(userClaims.uid, itemId, accessToken);
 
   // FIXME: This needs to be stored in Firestore and shouldn't be exposed
   //        to the client side.
@@ -79,16 +71,25 @@ exports.setAccessToken = functions.https.onCall(async (publicToken) => {
 });
 
 exports.saveSocialAuthToken = functions.https.onCall(async (params) => {
+  const userClaims = await admin.auth().verifyIdToken(params.idToken);
+
   await saveSocialAuthToken(
-    TEMP_UID,
+    userClaims.uid,
     params.providerId,
     params.accessToken,
   );
 });
 
+/**
+ * Trigger various sync operations
+ *
+ * @param {string} params.idToken
+ */
 exports.populateData = functions.https.onCall(async (params) => {
   const ctx = {idToken: params.idToken};
-  const txnGetResp = await getTransactions(TEMP_UID, TEMP_ITEM_ID);
+  const userClaims = await admin.auth().verifyIdToken(params.idToken);
+
+  const txnGetResp = await getTransactions(userClaims.uid);
 
   // Core syncs
   await syncAccounts(

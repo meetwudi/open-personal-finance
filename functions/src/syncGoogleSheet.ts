@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { google } from "googleapis";
+import { flatten, sum } from "lodash";
 import { TransactionsGetResponse } from "plaid";
 import { TEMP_UID } from "./constants";
 import { ExecutionContext } from "./execution-context";
@@ -10,12 +11,12 @@ import { getSocialAuthToken } from "./social-auth";
 
 
 export default async function syncGoogleSheet(
-  txnGetResp: TransactionsGetResponse,
+  txnGetResps: TransactionsGetResponse[],
   ctx: ExecutionContext,
 ): Promise<void> {
   const userClaims = await admin.auth().verifyIdToken(ctx.idToken);
   const enabledAccounts = await getEnabledAccounts(userClaims.uid);
-  const txns = dedupTransactions(txnGetResp.transactions);
+  const txns = dedupTransactions(flatten(txnGetResps.map((r) => r.transactions)));
 
   const headers = [
     "Name",
@@ -23,7 +24,8 @@ export default async function syncGoogleSheet(
     "Date",
     "Amount",
     "Time",
-    "Merchant"
+    "Merchant",
+    "Account ID"
   ];
 
   const values = txns
@@ -35,14 +37,15 @@ export default async function syncGoogleSheet(
       txn.amount,
       txn.authorized_datetime,
       txn.merchant_name,
+      txn.account_id
     ]));
 
   functions.logger.info("syncGoogleSheet", {
     uid: userClaims.uid,
     countRows: values.length,
-    totalTransactions: txnGetResp.transactions.length,
+    totalTransactions: sum(txnGetResps.map((r) => r.transactions.length)),
     totalTransactionsDedup: txns.length,
-    totalAccounts: txnGetResp.accounts.length,
+    totalAccounts: sum(txnGetResps.map((r) => r.accounts.length)),
     enabledAccounts,
   });
 

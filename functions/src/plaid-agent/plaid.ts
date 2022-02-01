@@ -5,7 +5,7 @@ import { Configuration, CountryCode, InstitutionsGetByIdResponse, PlaidApi, Plai
 import { COLLECTION_PLAID_ITEM } from "./collections";
 import moment = require("moment");
 import { AxiosResponse } from "axios";
-import { queryExistingItems } from "./items";
+import { queryByUid, queryByUidAndInstitution } from "./items";
 
 const PLAID_CLIENT_ID = functions.config().plaid.client_id;
 const PLAID_SECRET = functions.config().plaid.client_secret;
@@ -85,7 +85,7 @@ export async function setAccessToken(
 
   await admin.firestore().runTransaction(async (txn) => {
     if (institutionId != null) {
-      const existingDoc = await txn.get(queryExistingItems(uid, institutionId));
+      const existingDoc = await txn.get(queryByUidAndInstitution(uid, institutionId));
       if (!existingDoc.empty) {
         await Promise.all(existingDoc.docs.map((itemDoc) => {
           txn.delete(itemDoc.ref);
@@ -147,12 +147,24 @@ export async function getAccessTokenX(
   return accessToken;
 }
 
-export async function getTransactions(uid: string, itemId: string): Promise<TransactionsGetResponse> {
+export async function getTransactions(uid: string): Promise<TransactionsGetResponse[]> {
+  const itemDocs = await queryByUid(uid).get();
+  return await Promise.all(itemDocs.docs.map((itemDoc) => getTransactionsForItem(
+    uid,
+    itemDoc.data().itemId,
+    itemDoc.data().accessToken,
+  )));
+}
+
+export async function getTransactionsForItem(
+  uid: string,
+  itemId: string,
+  accessToken: string,
+): Promise<TransactionsGetResponse> {
   // Pull transactions for the Item for the last 30 days
   const startDate = moment().subtract(30, "days").format("YYYY-MM-DD");
   const endDate = moment().format("YYYY-MM-DD");
   const client = getPlaidClient();
-  const accessToken = await getAccessTokenX(uid, itemId);
   const configs = {
     access_token: accessToken,
     start_date: startDate,
