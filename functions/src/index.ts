@@ -95,7 +95,7 @@ exports.populateData = functions.https.onCall(async (params) => {
 
   // Plugin syncs
   await syncGoogleSheet(
-    txnGetResp,
+    txnGetResp, // FIXME: Plugin syncs should not access txnGetResp
     ctx,
   );
 });
