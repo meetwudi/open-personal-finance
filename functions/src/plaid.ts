@@ -73,7 +73,6 @@ export async function setAccessToken(
 
         functions.logger.info("setAccessToken deleted item", {
           itemId: doc.data().itemId,
-          accessTokenInitials: doc.data().accessToken.slice(6),
         });
 
         return getPlaidClient().itemRemove({
