@@ -120,12 +120,13 @@ export async function getTransactions(): Promise<TransactionsGetResponse> {
 
   const accessToken = await getAccessTokenX(TEMP_UID, TEMP_ITEM_ID);
 
+  // Need to paginate
   const configs = {
     access_token: accessToken,
     start_date: startDate,
     end_date: endDate,
     options: {
-      count: 250,
+      count: 500,
       offset: 0,
     },
   };
