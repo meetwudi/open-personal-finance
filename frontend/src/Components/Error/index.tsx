@@ -62,9 +62,9 @@ const Error = (props: Props) => {
           <div className={styles.errorItem}>
             <span className={styles.errorTitle}>Message: </span>
             <span className={styles.errorMessage}>
-              {props.error.display_message == null
-                ? props.error.error_message
-                : props.error.display_message}
+              {props.error.display_message == null ?
+                props.error.error_message :
+                props.error.display_message}
             </span>
           </div>
         </div>

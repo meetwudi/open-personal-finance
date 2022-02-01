@@ -32,8 +32,7 @@ const Endpoint = (props: Props) => {
     let data;
     if (props.endpoint === "transactions") {
       data = await ffGetTransactions();
-    }
-    else {
+    } else {
       const response = await fetch(`/api/${props.endpoint}`, { method: "GET" });
       data = await response.json();
     }
@@ -74,7 +73,7 @@ const Endpoint = (props: Props) => {
             className={styles.sendRequest}
             onClick={getData}
           >
-            {isLoading ? "Loading..." : `Send request`}
+            {isLoading ? "Loading..." : "Send request"}
           </Button>
           {pdf != null && (
             <Button

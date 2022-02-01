@@ -30,13 +30,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "eject": "react-scripts eject",
+    "lint": "eslint --ext .js,.ts,.tsx ."
   },
   "browserslist": {
     "production": [
@@ -51,7 +46,9 @@
     ]
   },
   "devDependencies": {
-    "@types/classnames": "^2.2.11"
+    "@types/classnames": "^2.2.11",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-import": "^2.25.4"
   },
   "resolutions": {
     "fsevents": "2.2.0"

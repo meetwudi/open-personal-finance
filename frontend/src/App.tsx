@@ -9,15 +9,14 @@ import GoogleAsyncMultiStep from "./Plugins/GoogleSyncMultiStep";
 import AccountSelection from "./Components/AccountSelection";
 
 const App = () => {
-  const { linkSuccess, isItemAccess, dispatch } = useContext(Context);
+  const { dispatch } = useContext(Context);
 
   const generateToken = useCallback(
     async () => {
       let data;
       try {
         data = await ffCreateLinkToken();
-      }
-      catch (e) {
+      } catch (e) {
         dispatch({ type: "SET_STATE", state: { linkToken: null } });
         return;
       }
@@ -35,7 +34,7 @@ const App = () => {
         }
         dispatch({ type: "SET_STATE", state: { linkToken: data.link_token } });
       }
-      localStorage.setItem("link_token", data.link_token); //to use later for Oauth
+      localStorage.setItem("link_token", data.link_token); // to use later for Oauth
     },
     [dispatch]
   );

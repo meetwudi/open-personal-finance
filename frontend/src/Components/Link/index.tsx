@@ -5,24 +5,23 @@ import Button from "plaid-threads/Button";
 import Context from "../../Context";
 import { ffSetAccessToken } from "../../firebase-functions";
 
-const Link = () => {
+const Link = (): JSX.Element => {
   const { linkToken, dispatch } = useContext(Context);
 
   const onSuccess = React.useCallback(
-    (public_token: string) => {
+    (publicToken: string) => {
       // send public_token to server
       const setToken = async () => {
         let data;
         try {
-          data = await ffSetAccessToken(public_token);
-        }
-        catch (e) {
+          data = await ffSetAccessToken(publicToken);
+        } catch (e) {
           console.error(e);
           dispatch({
             type: "SET_STATE",
             state: {
-              itemId: `no item_id retrieved`,
-              accessToken: `no access_token retrieved`,
+              itemId: "no item_id retrieved",
+              accessToken: "no access_token retrieved",
               isItemAccess: false,
             },
           });
@@ -52,8 +51,6 @@ const Link = () => {
   };
 
   if (window.location.href.includes("?oauth_state_id=")) {
-    // TODO: figure out how to delete this ts-ignore
-    // @ts-ignore
     config.receivedRedirectUri = window.location.href;
     isOauth = true;
   }

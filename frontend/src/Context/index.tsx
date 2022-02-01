@@ -54,10 +54,10 @@ export const QuickstartProvider: React.FC<{ children: ReactNode }> = (
     action: QuickstartAction
   ): QuickstartState => {
     switch (action.type) {
-      case "SET_STATE":
-        return { ...state, ...action.state };
-      default:
-        return { ...state };
+    case "SET_STATE":
+      return { ...state, ...action.state };
+    default:
+      return { ...state };
     }
   };
   const [state, dispatch] = useReducer(reducer, initialState);

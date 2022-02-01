@@ -28,7 +28,7 @@ export interface Categories {
   field: string;
 }
 
-//interfaces for categories in each individual product
+// interfaces for categories in each individual product
 interface AuthDataItem {
   routing: string;
   account: string;
@@ -106,7 +106,7 @@ export interface ErrorDataItem {
   status_code: number | null;
 }
 
-//all possible product data interfaces
+// all possible product data interfaces
 export type DataItem =
   | AuthDataItem
   | TransactionsDataItem
@@ -431,7 +431,7 @@ interface InvestmentData {
 }
 
 export const transformInvestmentsData = (data: InvestmentData) => {
-  const holdingsData = data.holdings.holdings!.sort(function (a, b) {
+  const holdingsData = data.holdings.holdings!.sort(function(a, b) {
     if (a.account_id > b.account_id) return 1;
     return -1;
   });
@@ -561,12 +561,12 @@ interface PaymentData {
 
 export const transformPaymentData = (data: PaymentData) => {
   const statusUpdate =
-    typeof data.payment.last_status_update === "string"
-      ? data.payment.last_status_update.replace("T", " ").replace("Z", "")
-      : new Date(data.payment.last_status_update * 1000) // Java data comes as timestamp
-          .toISOString()
-          .replace("T", " ")
-          .replace("Z", "");
+    typeof data.payment.last_status_update === "string" ?
+      data.payment.last_status_update.replace("T", " ").replace("Z", "") :
+      new Date(data.payment.last_status_update * 1000) // Java data comes as timestamp
+        .toISOString()
+        .replace("T", " ")
+        .replace("Z", "");
   return [
     {
       paymentId: data.payment.payment_id,
