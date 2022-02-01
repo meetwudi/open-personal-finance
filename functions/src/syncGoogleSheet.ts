@@ -27,15 +27,7 @@ export default async function syncGoogleSheet(
   ];
 
   const values = txns
-    .filter((txn) => {
-      functions.logger.info("syncGoogleSheet debug", {
-        accountEnabled: txn.account_id,
-        enabledAccounts,
-        enabledAccountsCount: enabledAccounts.size,
-        value: enabledAccounts.has(txn.account_id),
-      });
-      return enabledAccounts.has(txn.account_id);
-    })
+    .filter((txn) => enabledAccounts.has(txn.account_id))
     .map((txn) => ([
       txn.name,
       (txn.category ?? []).join(","),

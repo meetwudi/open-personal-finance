@@ -66,7 +66,7 @@ export default function AccountSelection() {
     const [user, _loadingUser, _errorUser] = useAuthState(getAuth());
 
     if (user == null) {
-        return <GoogleAuthButton />
+        return null;
     }
 
     return <AccountSelectionAuthenticated user={user} />

@@ -1,8 +1,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import { first } from "lodash";
+import { first, flatten, range } from "lodash";
 import { Configuration, CountryCode, PlaidApi, PlaidEnvironments, Products, TransactionsGetResponse } from "plaid";
-import { TEMP_ITEM_ID, TEMP_UID } from "./constants";
 import moment = require("moment");
 
 const PLAID_CLIENT_ID = functions.config().plaid.client_id;
@@ -67,8 +66,21 @@ export async function setAccessToken(
     const existingDoc = await txn.get(existingDocQuery);
 
     if (existingDoc.docs.length > 0) {
-      existingDoc.docs.forEach((doc) => txn.update(doc.ref, {
-        accessToken
+      await Promise.all(existingDoc.docs.map((doc) => {
+        txn.update(doc.ref, {
+          accessToken
+        });
+
+        functions.logger.info("setAccessToken deleted item", {
+          itemId: doc.data().itemId,
+          accessTokenInitials: doc.data().accessToken.slice(6),
+        });
+
+        return getPlaidClient().itemRemove({
+          client_id: PLAID_CLIENT_ID,
+          secret: PLAID_SECRET,
+          access_token: doc.data().accessToken,
+        });
       }));
     } else {
       txn.create(
@@ -112,24 +124,57 @@ export async function getAccessTokenX(
   return accessToken;
 }
 
-export async function getTransactions(): Promise<TransactionsGetResponse> {
+export async function getTransactions(uid: string, itemId: string): Promise<TransactionsGetResponse> {
   // Pull transactions for the Item for the last 30 days
   const startDate = moment().subtract(30, "days").format("YYYY-MM-DD");
   const endDate = moment().format("YYYY-MM-DD");
   const client = getPlaidClient();
-
-  const accessToken = await getAccessTokenX(TEMP_UID, TEMP_ITEM_ID);
-
-  // Need to paginate
+  const accessToken = await getAccessTokenX(uid, itemId);
   const configs = {
     access_token: accessToken,
     start_date: startDate,
     end_date: endDate,
-    options: {
-      count: 500,
-      offset: 0,
-    },
   };
-  const transactionsResponse = await client.transactionsGet(configs);
-  return transactionsResponse.data;
+
+  let responses: TransactionsGetResponse[] = [];
+  const firstResponse = await client.transactionsGet(configs);
+  const PAGE_SIZE = 500;
+  responses.push(firstResponse.data);
+
+  const missingTransactions = firstResponse.data.total_transactions - firstResponse.data.transactions.length;
+  if (missingTransactions > 0) {
+    const pages = Math.ceil(missingTransactions / PAGE_SIZE);
+
+    functions.logger.info("getTransactions:fetchAdditionalPages", {
+      uid,
+      itemId,
+      pages,
+    });
+
+    const moreResponses = await Promise.all(range(0, pages).map((pageId) => {
+      return client.transactionsGet({
+        ...configs,
+        options: {
+          offset: firstResponse.data.transactions.length + pageId * PAGE_SIZE,
+          count: PAGE_SIZE,
+        }
+      });
+    }));
+    responses = responses.concat(moreResponses.map((r) => r.data));
+  }
+
+  const allTransactions = flatten(responses.map((r) => r.transactions));
+
+  functions.logger.info("getTransactions", {
+    uid,
+    itemId,
+    firstResponseTransactionsCount: firstResponse.data.transactions.length,
+    firstResponseTotalTransactions: firstResponse.data.total_transactions,
+    allTransactionsReturned: allTransactions.length,
+  });
+
+  return {
+    ...firstResponse.data,
+    transactions: allTransactions,
+  };
 }

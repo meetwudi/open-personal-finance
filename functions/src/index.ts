@@ -73,8 +73,6 @@ exports.setAccessToken = functions.https.onCall(async (params) => {
   };
 });
 
-exports.getTransactions = functions.https.onCall(getTransactions);
-
 exports.saveSocialAuthToken = functions.https.onCall(async (params) => {
   await saveSocialAuthToken(
     TEMP_UID,
@@ -84,8 +82,8 @@ exports.saveSocialAuthToken = functions.https.onCall(async (params) => {
 });
 
 exports.populateData = functions.https.onCall(async (params) => {
-  const txnGetResp = await getTransactions();
   const ctx = {idToken: params.idToken};
+  const txnGetResp = await getTransactions(TEMP_UID, TEMP_ITEM_ID);
 
   // Core syncs
   await syncAccounts(
