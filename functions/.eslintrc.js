@@ -32,5 +32,6 @@ module.exports = {
     "max-len": 0,
     "object-curly-spacing": 0,
     "comma-dangle": 0,
+    "camelcase": 0,
   },
 };

@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { google } from "googleapis";
+import { first } from "lodash";
 import { COLLECTION_GOOGLE_AUTH_CREDENTIALS } from "./collections";
 
 const GOOGLE_CLIENT_ID: string = functions.config().google.client_id;
@@ -29,37 +30,57 @@ export const ffGetGoogleOauthLink = functions.https.onCall(async (params) => {
   });
 });
 
+export async function getGoogleAccessToken(
+  // FIXME: Some APIs use uid while others use idToken. Figure out a safe and consistent way
+  //        to pass this info around.
+  uid: string,
+): Promise<any> {
+  const collection = admin.firestore().collection(COLLECTION_GOOGLE_AUTH_CREDENTIALS);
+  const queryResult = await collection.where("uid", "==", uid)
+    .get();
+
+  return first(queryResult.docs)?.data();
+}
+
 export const ffHasAccessTokenWithScope = functions.https.onCall(async () => {
   return false;
 });
 
-export const ffHandleOauthCode = functions.https.onRequest(async (req, res) => {
-  const { code } = req.query;
+/**
+ * Verify OAuth code, and associate the tokens with the given user
+ *
+ * @param {string} params.idToken
+ * @param {string} params.code - OAuth code from Google
+ */
+export const ffReceiveGoogleOauthCode = functions.https.onCall(async (params) => {
   const oauth2Client = new google.auth.OAuth2(
     GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET,
     GOOGLE_REDIRECT_URI,
   );
 
+  const { code } = params;
   if (typeof code !== "string") {
     throw new functions.https.HttpsError("invalid-argument", "`code` is not a valid string");
   }
 
   const {tokens} = await oauth2Client.getToken(code);
-  const idToken = tokens.id_token;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const doc: any = Object.assign({}, tokens);
+  const userClaims = await admin.auth().verifyIdToken(params.idToken);
 
-  // FIXME: idToken might be used to link with a user but this is not working
-  // properly at the moment. Figure out a way to link a firebase user with Google
-  // auth token. Likely we need to do this handling logic on client side instead.
-  if (idToken != null) {
-    const userClaims = await admin.auth().verifyIdToken(idToken);
-    doc.uid = userClaims.uid;
-  }
+  const doc = Object.assign({}, tokens, {
+    uid: userClaims.uid,
+  });
 
-  await admin.firestore().collection(COLLECTION_GOOGLE_AUTH_CREDENTIALS)
-    .add(doc);
+  await admin.firestore().runTransaction(async (db) => {
+    const credentialsCollection = admin.firestore().collection(COLLECTION_GOOGLE_AUTH_CREDENTIALS);
+    const existingTokens = await db.get(credentialsCollection
+      .where("uid", "==", userClaims.uid));
 
-  res.send("ok").status(200);
+    existingTokens.docs.forEach((doc) => db.delete(doc.ref));
+
+    db.create(
+      credentialsCollection.doc(),
+      doc,
+    );
+  });
 });

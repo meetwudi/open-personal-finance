@@ -88,6 +88,9 @@ export async function setAccessToken(
       const existingDoc = await txn.get(queryByUidAndInstitution(uid, institutionId));
       if (!existingDoc.empty) {
         await Promise.all(existingDoc.docs.map((itemDoc) => {
+          // FIXME: Sometimes the doc isn't deleted but the API is called
+          //        which causes inconsistency and dangling invalid access
+          //        tokens.
           txn.delete(itemDoc.ref);
 
           functions.logger.warn("setAccessToken:removeItem", {
@@ -95,6 +98,7 @@ export async function setAccessToken(
             itemId,
             institutionId,
           });
+
           return plaidClient.itemRemove({
             client_id: PLAID_CLIENT_ID,
             secret: PLAID_SECRET,
@@ -156,6 +160,7 @@ export async function getTransactions(uid: string): Promise<TransactionsGetRespo
   )));
 }
 
+// FIXME: Investigate why sometimes plaid returns empty transactions result
 export async function getTransactionsForItem(
   uid: string,
   itemId: string,

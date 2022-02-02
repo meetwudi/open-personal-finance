@@ -32,6 +32,7 @@ module.exports = {
       "require-jsdoc": 0,
       "indent": ["error", 2],
       "max-len": 0,
+      "valid-jsdoc": 0,
       "object-curly-spacing": 0,
       "comma-dangle": 0,
       "camelcase": 0

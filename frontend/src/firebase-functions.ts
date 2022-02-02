@@ -39,29 +39,6 @@ export async function ffGetTransactions(): Promise<any> {
   return result.data;
 }
 
-export async function ffSaveSocialAuthToken(
-  providerId: string,
-  accessToken: string,
-): Promise<any> {
-  const user = getAuth().currentUser;
-
-  if (user == null) {
-    throw new Error("User not logged in");
-  }
-
-  const idToken = await getIdToken(user);
-  const functions = getFunctions(getApp());
-  const fn = httpsCallable(functions, "saveSocialAuthToken");
-
-  // FIXME: Pass idToken here
-  const result = await fn({
-    accessToken,
-    providerId,
-    idToken,
-  });
-  return result.data;
-}
-
 export async function ffPopulateData(): Promise<any> {
   const user = getAuth().currentUser;
 
@@ -101,5 +78,21 @@ export async function ffGetGoogleOfflineAuthLink(): Promise<any> {
   const functions = getFunctions(getApp());
   const fn = httpsCallable(functions, "ffGetGoogleOauthLink"); // TBD: This function is renamed to ffGetGoogleOauthLink
   const result = await fn({ scopes: ["https://www.googleapis.com/auth/spreadsheets"] });
+  return result.data;
+}
+
+export async function ffReceiveGoogleOauthCode(
+  code: string
+): Promise<any> {
+  const user = getAuth().currentUser;
+
+  if (user == null) {
+    throw new Error("User not logged in");
+  }
+
+  const idToken = await getIdToken(user);
+  const functions = getFunctions(getApp());
+  const fn = httpsCallable(functions, "ffReceiveGoogleOauthCode"); // TBD: This function is renamed to ffGetGoogleOauthLink
+  const result = await fn({ idToken, code });
   return result.data;
 }

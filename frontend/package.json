@@ -19,6 +19,7 @@
     "react-dom": "^16.14.0",
     "react-firebase-hooks": "^5.0.0",
     "react-plaid-link": "^3.2.1",
+    "react-router-dom": "^6.2.1",
     "react-scripts": "4.0.1",
     "sass": "^1.32.8",
     "sass-loader": "^10.1.1",

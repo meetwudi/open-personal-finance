@@ -1,5 +1,4 @@
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { ffSaveSocialAuthToken } from "./firebase-functions";
 
 export async function initGoogleAuth(): Promise<void> {
   // Very naive implementation of Google Auth
@@ -10,21 +9,5 @@ export async function initGoogleAuth(): Promise<void> {
   provider.addScope("https://www.googleapis.com/auth/spreadsheets");
 
   const auth = getAuth();
-  const result = await signInWithPopup(auth, provider);
-
-  // This gives you a Google Access Token. You can use it to access the Google API.
-  const credential = GoogleAuthProvider.credentialFromResult(result);
-  if (credential == null) {
-    throw new Error("Failed to authenticate to Google");
-  }
-
-  const accessToken = credential.accessToken;
-  if (accessToken == null) {
-    throw new Error("Failed to get Google accessToken");
-  }
-
-  await ffSaveSocialAuthToken(
-    credential.providerId,
-    accessToken,
-  );
+  await signInWithPopup(auth, provider);
 }

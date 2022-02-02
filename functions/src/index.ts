@@ -2,7 +2,7 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { LinkTokenCreateRequest } from "plaid";
 import { COLLECTION_USER_ACCOUNT_SETTINGS, PRODUCT_CODE_NAME } from "./constants";
-import { ffGetGoogleOauthLink, ffHandleOauthCode, ffHasAccessTokenWithScope } from "./google-auth";
+import { ffGetGoogleOauthLink, ffReceiveGoogleOauthCode, ffHasAccessTokenWithScope } from "./google-auth";
 import {
   setAccessToken,
   syncAccounts,
@@ -13,7 +13,6 @@ import {
   PLAID_PRODUCTS,
   PLAID_REDIRECT_URI
 } from "./plaid-agent";
-import { saveSocialAuthToken } from "./social-auth";
 import syncGoogleSheet from "./syncGoogleSheet";
 
 admin.initializeApp();
@@ -74,16 +73,6 @@ exports.setAccessToken = functions.https.onCall(async (params) => {
   };
 });
 
-exports.saveSocialAuthToken = functions.https.onCall(async (params) => {
-  const userClaims = await admin.auth().verifyIdToken(params.idToken);
-
-  await saveSocialAuthToken(
-    userClaims.uid,
-    params.providerId,
-    params.accessToken,
-  );
-});
-
 /**
  * Trigger various sync operations
  *
@@ -134,4 +123,4 @@ exports.updatePlaidAccountSettings = functions.https.onCall(async (params) => {
 // google-auth
 exports.ffGetGoogleOauthLink = ffGetGoogleOauthLink;
 exports.ffHasAccessTokenWithScope = ffHasAccessTokenWithScope;
-exports.ffHandleOauthCode = ffHandleOauthCode;
+exports.ffReceiveGoogleOauthCode = ffReceiveGoogleOauthCode;

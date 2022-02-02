@@ -4,7 +4,7 @@ import { ffGetGoogleOfflineAuthLink } from "../../firebase-functions";
 export default function OfflineGoogleAuthButton(): JSX.Element {
   const handleClick = useCallback(async () => {
     const link = await ffGetGoogleOfflineAuthLink();
-    window.open(link, "_blank", "popup");
+    window.location = link;
   }, []);
 
   return <button onClick={handleClick}>

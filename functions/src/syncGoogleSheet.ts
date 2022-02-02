@@ -3,11 +3,10 @@ import * as functions from "firebase-functions";
 import { google } from "googleapis";
 import { flatten, sum } from "lodash";
 import { TransactionsGetResponse } from "plaid";
-import { TEMP_UID } from "./constants";
 import { ExecutionContext } from "./execution-context";
+import { getGoogleAccessToken } from "./google-auth";
 import { dedupTransactions } from "./plaid-agent/transactions";
 import { getEnabledAccounts } from "./plaid-agent/user-plaid-accounts";
-import { getSocialAuthToken } from "./social-auth";
 
 
 export default async function syncGoogleSheet(
@@ -52,11 +51,8 @@ export default async function syncGoogleSheet(
   values.unshift(headers);
 
   const oauthClient = new google.auth.OAuth2();
-  const accessToken = await getSocialAuthToken(TEMP_UID, "google.com");
-  oauthClient.setCredentials({
-    access_token: accessToken,
-    id_token: ctx.idToken,
-  });
+  const tokens = await getGoogleAccessToken(userClaims.uid);
+  oauthClient.setCredentials(tokens);
 
   const sheetsApi = google.sheets({
     version: "v4",

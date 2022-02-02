@@ -1,15 +1,15 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import App from "./App";
 import { QuickstartProvider } from "./Context";
 import reportWebVitals from "./reportWebVitals";
 
 import "./firebase-init";
+import AppRouter from "./Components/AppRouter";
 
 ReactDOM.render(
   <React.StrictMode>
     <QuickstartProvider>
-      <App />
+      <AppRouter />
     </QuickstartProvider>
   </React.StrictMode>,
   document.getElementById("root")
