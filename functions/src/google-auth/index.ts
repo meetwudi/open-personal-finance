@@ -46,19 +46,18 @@ export const ffHandleOauthCode = functions.https.onRequest(async (req, res) => {
   }
 
   const {tokens} = await oauth2Client.getToken(code);
-  functions.logger.info("ffHandleOauthCode:gotTokens");
-
   const idToken = tokens.id_token;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const doc: any = Object.assign({}, tokens);
 
+  // FIXME: idToken might be used to link with a user but this is not working
+  // properly at the moment. Figure out a way to link a firebase user with Google
+  // auth token. Likely we need to do this handling logic on client side instead.
   if (idToken != null) {
-    functions.logger.info("ffHandleOauthCode:verifyIdToken");
     const userClaims = await admin.auth().verifyIdToken(idToken);
     doc.uid = userClaims.uid;
   }
 
-  functions.logger.info("ffHandleOauthCode:addDoc");
   await admin.firestore().collection(COLLECTION_GOOGLE_AUTH_CREDENTIALS)
     .add(doc);
 
