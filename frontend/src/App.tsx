@@ -4,12 +4,18 @@ import Header from "./Components/Headers";
 import Context from "./Context";
 
 import styles from "./App.module.scss";
+
+// FIXME: Only import what's needed
+import "bootstrap/scss/bootstrap.scss";
+
 import { ffCreateLinkToken } from "./firebase-functions";
 import AccountSelection from "./Components/AccountSelection";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { getAuth } from "firebase/auth";
 import GoogleAuthButton from "./Plugins/GoogleSheetSync/GoogleAuthButton";
 import GoogleSheetSync from "./Plugins/GoogleSheetSync";
+import AuthenticatedOnly from "./Components/AuthenticatedOnly";
+import PlaidConnect from "./Components/PlaidConnect";
 
 const App = (): JSX.Element => {
   const { dispatch } = useContext(Context);
@@ -74,18 +80,22 @@ const App = (): JSX.Element => {
   }
 
   return (
-    <div className={styles.App}>
-      <div className={styles.container}>
-        <div>
-          <GoogleAuthButton />
-          <Header />
-        </div>
-        <AccountSelection />
+    <AuthenticatedOnly>
+      {(user) => <PlaidConnect user={user}>
+        <div className={styles.App}>
+          <div className={styles.container}>
+            <div>
+              <GoogleAuthButton />
+              <Header />
+            </div>
+            <AccountSelection />
 
-        {/* Plugins */}
-        <GoogleSheetSync />
-      </div>
-    </div>
+            {/* Plugins */}
+            <GoogleSheetSync />
+          </div>
+        </div>
+      </PlaidConnect>}
+    </AuthenticatedOnly>
   );
 };
 
