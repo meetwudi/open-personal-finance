@@ -6,4 +6,7 @@ firebase functions:config:set \
     plaid.env="sandbox" \
     plaid.products="auth,transactions" \
     plaid.country_codes="US,CA" \
-    plaid.oauth_redirect_uri=""   
+    plaid.oauth_redirect_uri="" \
+    google.client_id="<google_client_id>" \
+    google.client_secret="<google_client_secret>" \
+    google.redirect_uri="http://localhost:3000/auth_handler"

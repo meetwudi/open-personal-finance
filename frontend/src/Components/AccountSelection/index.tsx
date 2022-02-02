@@ -1,12 +1,11 @@
 import { getAuth, User } from "firebase/auth";
-import { collection, doc, DocumentReference, getFirestore, query, runTransaction, where } from "firebase/firestore";
+import { collection, getFirestore, query, where } from "firebase/firestore";
 import React, { useCallback, useEffect, useState } from "react";
 import { Form } from "react-bootstrap";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { COLLECTION_PLAID_FINANCIAL_ACCOUNTS, COLLECTION_USER_ACCOUNT_SETTINGS } from "../../constants";
 import { ffUpdatePlaidAccountSettings } from "../../firebase-functions";
-import GoogleAuthButton from "../../Plugins/GoogleSyncMultiStep/GoogleAuthButton";
 
 type PropsAuthenticated = {
     user: User,

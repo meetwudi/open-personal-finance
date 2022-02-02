@@ -5,11 +5,15 @@ import Context from "./Context";
 
 import styles from "./App.module.scss";
 import { ffCreateLinkToken } from "./firebase-functions";
-import GoogleAsyncMultiStep from "./Plugins/GoogleSyncMultiStep";
 import AccountSelection from "./Components/AccountSelection";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { getAuth } from "firebase/auth";
+import GoogleAuthButton from "./Plugins/GoogleSheetSync/GoogleAuthButton";
+import GoogleSheetSync from "./Plugins/GoogleSheetSync";
 
-const App = () => {
+const App = (): JSX.Element => {
   const { dispatch } = useContext(Context);
+  const [user, loadingUser, _errorUser] = useAuthState(getAuth());
 
   const generateToken = useCallback(
     async () => {
@@ -17,6 +21,7 @@ const App = () => {
       try {
         data = await ffCreateLinkToken();
       } catch (e) {
+        console.error(e);
         dispatch({ type: "SET_STATE", state: { linkToken: null } });
         return;
       }
@@ -40,6 +45,10 @@ const App = () => {
   );
 
   useEffect(() => {
+    if (user == null) {
+      return;
+    }
+
     const init = async () => {
       // do not generate a new token for OAuth redirect; instead
       // setLinkToken from localStorage
@@ -55,18 +64,26 @@ const App = () => {
       generateToken();
     };
     init();
-  }, [dispatch, generateToken]);
+  }, [dispatch, generateToken, user]);
+
+  if (loadingUser) {
+    return <div>Loading user ...</div>;
+  }
+  if (!user) {
+    return <GoogleAuthButton />;
+  }
 
   return (
     <div className={styles.App}>
       <div className={styles.container}>
         <div>
+          <GoogleAuthButton />
           <Header />
         </div>
         <AccountSelection />
 
         {/* Plugins */}
-        <GoogleAsyncMultiStep />
+        <GoogleSheetSync />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { ffSaveSocialAuthToken } from "./firebase-functions";
 
-export async function initGoogleAuth() {
+export async function initGoogleAuth(): Promise<void> {
   // Very naive implementation of Google Auth
   // FIXME: Refresh token is not available in this approach
   // FIXME: Scope is not verified

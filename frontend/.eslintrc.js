@@ -16,7 +16,7 @@ module.exports = {
     ],
     parser: "@typescript-eslint/parser",
     parserOptions: {
-      project: ["tsconfig.json", "tsconfig.dev.json"],
+      project: ["tsconfig.json"],
       sourceType: "module",
     },
     ignorePatterns: [
@@ -34,6 +34,7 @@ module.exports = {
       "max-len": 0,
       "object-curly-spacing": 0,
       "comma-dangle": 0,
+      "camelcase": 0
     },
   };
   
