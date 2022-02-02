@@ -42,3 +42,15 @@ async function syncAccountsForItem(
     ).forEach((doc) => db.delete(doc.ref));
   });
 }
+
+export async function getEnabledAccounts(
+  uid: string,
+): Promise<FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>[]> {
+  const accounts = await admin.firestore()
+    .collection(COLLECTION_PLAID_FINANCIAL_ACCOUNTS)
+    .where("uid", "==", uid)
+    .get();
+
+  return accounts.docs
+    .filter((doc) => doc.data().accountEnabledGlobally !== false);
+}

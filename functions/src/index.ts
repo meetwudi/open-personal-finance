@@ -1,8 +1,8 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { LinkTokenCreateRequest } from "plaid";
-import { COLLECTION_USER_ACCOUNT_SETTINGS, PRODUCT_CODE_NAME } from "./constants";
-import { ffGetGoogleOauthLink, ffReceiveGoogleOauthCode, ffHasAccessTokenWithScope } from "./google-auth";
+import { PRODUCT_CODE_NAME } from "./constants";
+import { ffGetGoogleOauthLink, ffReceiveGoogleOauthCode } from "./google-auth";
 import {
   setAccessToken,
   syncAccounts,
@@ -13,6 +13,7 @@ import {
   PLAID_PRODUCTS,
   PLAID_REDIRECT_URI
 } from "./plaid-agent";
+import { COLLECTION_PLAID_FINANCIAL_ACCOUNTS } from "./plaid-agent/collections";
 import syncGoogleSheet from "./syncGoogleSheet";
 
 admin.initializeApp();
@@ -102,25 +103,24 @@ exports.updatePlaidAccountSettings = functions.https.onCall(async (params) => {
   const claims = await admin.auth().verifyIdToken(idToken);
 
   await admin.firestore().runTransaction(async (db) => {
-    const collection = admin.firestore().collection(COLLECTION_USER_ACCOUNT_SETTINGS);
+    const collection = admin.firestore()
+      .collection(COLLECTION_PLAID_FINANCIAL_ACCOUNTS);
     const existingDocs = await db.get(collection
       .where("uid", "==", claims.uid)
       .where("accountId", "==", accountId));
 
     if (existingDocs.empty) {
-      db.create(collection.doc(), {
-        uid: claims.uid,
+      throw new functions.https.HttpsError("not-found", "account not found", {
         accountId,
-        accountEnabledGlobally,
+        uid: claims.uid,
       });
-    } else {
-      existingDocs.forEach(
-        (doc) => db.update(doc.ref, {accountEnabledGlobally}));
     }
+
+    existingDocs.forEach(
+      (doc) => db.update(doc.ref, {accountEnabledGlobally}));
   });
 });
 
 // google-auth
 exports.ffGetGoogleOauthLink = ffGetGoogleOauthLink;
-exports.ffHasAccessTokenWithScope = ffHasAccessTokenWithScope;
 exports.ffReceiveGoogleOauthCode = ffReceiveGoogleOauthCode;

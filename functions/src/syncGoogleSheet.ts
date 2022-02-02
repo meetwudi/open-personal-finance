@@ -4,9 +4,9 @@ import { google } from "googleapis";
 import { flatten, sum } from "lodash";
 import { TransactionsGetResponse } from "plaid";
 import { ExecutionContext } from "./execution-context";
-import { getGoogleAccessToken } from "./google-auth";
+import { getTokens } from "./google-auth";
+import { getEnabledAccounts } from "./plaid-agent/accounts";
 import { dedupTransactions } from "./plaid-agent/transactions";
-import { getEnabledAccounts } from "./plaid-agent/user-plaid-accounts";
 
 
 export default async function syncGoogleSheet(
@@ -15,6 +15,7 @@ export default async function syncGoogleSheet(
 ): Promise<void> {
   const userClaims = await admin.auth().verifyIdToken(ctx.idToken);
   const enabledAccounts = await getEnabledAccounts(userClaims.uid);
+  const enabledAccountIds = new Set(enabledAccounts.map((doc) => doc.data().accountId));
   const txns = dedupTransactions(flatten(txnGetResps.map((r) => r.transactions)));
 
   const headers = [
@@ -28,7 +29,7 @@ export default async function syncGoogleSheet(
   ];
 
   const values = txns
-    .filter((txn) => enabledAccounts.has(txn.account_id))
+    .filter((txn) => enabledAccountIds.has(txn.account_id))
     .map((txn) => ([
       txn.name,
       (txn.category ?? []).join(","),
@@ -51,7 +52,16 @@ export default async function syncGoogleSheet(
   values.unshift(headers);
 
   const oauthClient = new google.auth.OAuth2();
-  const tokens = await getGoogleAccessToken(userClaims.uid);
+  const tokens = await getTokens(userClaims.uid);
+  if (tokens == null) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Google access token not found",
+      {
+        uid: userClaims,
+      });
+  }
+
   oauthClient.setCredentials(tokens);
   // FIXME: Figure out how tokens can be refreshed
   // https://github.com/googleapis/google-api-nodejs-client#handling-refresh-tokens
