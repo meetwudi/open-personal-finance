@@ -53,6 +53,8 @@ export default async function syncGoogleSheet(
   const oauthClient = new google.auth.OAuth2();
   const tokens = await getGoogleAccessToken(userClaims.uid);
   oauthClient.setCredentials(tokens);
+  // FIXME: Figure out how tokens can be refreshed
+  // https://github.com/googleapis/google-api-nodejs-client#handling-refresh-tokens
 
   const sheetsApi = google.sheets({
     version: "v4",
