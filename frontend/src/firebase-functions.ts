@@ -77,7 +77,7 @@ export async function ffGetGoogleOfflineAuthLink(): Promise<any> {
 
   const idToken = await getIdToken(user);
   const functions = getFunctions(getApp());
-  const fn = httpsCallable(functions, "ffGetGoogleOauthLink"); // TBD: This function is renamed to ffGetGoogleOauthLink
+  const fn = httpsCallable(functions, "ffGetGoogleOauthLink");
   const result = await fn({ idToken, scopes: ["https://www.googleapis.com/auth/spreadsheets"] });
   return result.data;
 }
