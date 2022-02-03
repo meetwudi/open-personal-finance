@@ -77,6 +77,8 @@ async function syncGoogleSheet(
     spreadsheetId,
     range: sheetName // Wipe out the whole sheet
   });
+
+  // FIXME: This doesn't create a sheet if sheetName doesn't exist
   await sheetsApi.spreadsheets.values.append({
     spreadsheetId,
     range: sheetName,
