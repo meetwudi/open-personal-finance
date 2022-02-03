@@ -3,6 +3,7 @@ import cx from "classnames";
 
 import styles from "./index.module.scss";
 import GoogleAuthButton from "../../apps/GoogleSheetSync/GoogleAuthButton";
+import PopulateDataButton from "./PopulateDataButton";
 
 export default function PageLayout(): JSX.Element {
   return <div className={cx("d-flex flex-row align-items-stretch", styles.pageContainer)}>
@@ -19,6 +20,7 @@ export default function PageLayout(): JSX.Element {
         </li>
         <li className="mb-2">
           <GoogleAuthButton />
+          <PopulateDataButton />
         </li>
       </ul>
     </div>

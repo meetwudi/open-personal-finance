@@ -54,6 +54,21 @@ export async function ffPopulateData(): Promise<any> {
   return result.data;
 }
 
+export async function ffSyncGoogleSheet(): Promise<any> {
+  const user = getAuth().currentUser;
+
+  if (user == null) {
+    throw new Error("User not logged in");
+  }
+
+  const idToken = await getIdToken(user);
+  const functions = getFunctions(getApp());
+  const fn = httpsCallable(functions, "ffSyncGoogleSheet");
+  const result = await fn({ idToken });
+  console.log("ffSyncGoogleSheet: Completed"); // FIXME: delete
+  return result.data;
+}
+
 export async function ffUpdatePlaidAccountSettings(accountId: string, accountEnabledGlobally: boolean): Promise<any> {
   const user = getAuth().currentUser;
 

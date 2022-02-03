@@ -9,5 +9,8 @@ export {
   PLAID_REDIRECT_URI,
   setAccessToken
 } from "./plaid";
+export {
+  getEnabledAccounts
+} from "./accounts";
 
 

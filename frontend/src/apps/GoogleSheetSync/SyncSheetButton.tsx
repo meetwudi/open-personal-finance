@@ -1,5 +1,5 @@
-import { ffPopulateData } from "../../firebase-functions";
+import { ffSyncGoogleSheet } from "../../firebase-functions";
 
 export default function SyncSheetButton(): JSX.Element {
-  return <button onClick={() => ffPopulateData()}>Sync to Google Sheet</button>;
+  return <button onClick={() => ffSyncGoogleSheet()}>Sync to Google Sheet</button>;
 }

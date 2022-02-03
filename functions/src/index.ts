@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { LinkTokenCreateRequest } from "plaid";
+import { ffSyncGoogleSheet } from "./apps/google-sheet-sync";
 import { PRODUCT_CODE_NAME } from "./constants";
 import { ffGetGoogleOauthLink, ffReceiveGoogleOauthCode } from "./google-auth";
 import {
@@ -14,7 +15,6 @@ import {
   PLAID_REDIRECT_URI
 } from "./plaid-agent";
 import { COLLECTION_PLAID_FINANCIAL_ACCOUNTS } from "./plaid-agent/collections";
-import syncGoogleSheet from "./syncGoogleSheet";
 
 admin.initializeApp();
 
@@ -82,18 +82,10 @@ exports.setAccessToken = functions.https.onCall(async (params) => {
 exports.populateData = functions.https.onCall(async (params) => {
   const ctx = {idToken: params.idToken};
   const userClaims = await admin.auth().verifyIdToken(params.idToken);
-
   const txnGetResp = await getTransactions(userClaims.uid);
 
-  // Core syncs
   await syncAccounts(
     txnGetResp,
-    ctx,
-  );
-
-  // Plugin syncs
-  await syncGoogleSheet(
-    txnGetResp, // FIXME: Plugin syncs should not access txnGetResp
     ctx,
   );
 });
@@ -127,3 +119,6 @@ exports.updatePlaidAccountSettings = functions.https.onCall(async (params) => {
 // google-auth
 exports.ffGetGoogleOauthLink = ffGetGoogleOauthLink;
 exports.ffReceiveGoogleOauthCode = ffReceiveGoogleOauthCode;
+
+// apps/google-sheet-sync
+exports.ffSyncGoogleSheet = ffSyncGoogleSheet;
