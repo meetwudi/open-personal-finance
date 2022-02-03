@@ -1,7 +1,6 @@
 import * as admin from "firebase-admin";
 import { first } from "lodash";
 import { COLLECTION_APP_GSS_SETTINGS } from "./collections";
-import { Column } from "./columns";
 
 async function getUserSettings(
   idToken: string
@@ -15,7 +14,17 @@ async function getUserSettings(
   return first(result.docs);
 }
 
-export async function getEnabledColumns(idToken: string): Promise<Column[]> {
-  const doc = await getUserSettings(idToken);
-  return doc?.data().enabledColumns;
+export async function isEnabled(idToken: string): Promise<boolean> {
+  const settings = await getUserSettings(idToken);
+  return settings?.data().isEnabled ?? false;
+}
+
+export async function getSpreadsheetUrl(idToken: string): Promise<string | null> {
+  const settings = await getUserSettings(idToken);
+  return settings?.data().spreadsheetUrl ?? null;
+}
+
+export async function getSheetName(idToken: string): Promise<string> {
+  const settings = await getUserSettings(idToken);
+  return settings?.data().sheetName ?? "Sheet1";
 }

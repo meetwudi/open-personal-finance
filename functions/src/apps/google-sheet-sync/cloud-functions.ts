@@ -7,8 +7,9 @@ import { ExecutionContext } from "../../execution-context";
 import { getAuthenticatedClientX } from "../../google-auth";
 import { getEnabledAccounts, getTransactions } from "../../plaid-agent";
 import { dedupTransactions } from "../../plaid-agent/transactions";
-import { getColumnName, getColumnValue } from "./columns";
-import { getEnabledColumns } from "./settings";
+import { Column, getColumnName, getColumnValue } from "./columns";
+import { getSheetName, getSpreadsheetUrl, isEnabled } from "./settings";
+import { getSpreadsheetId } from "./spreadsheet";
 
 export const ffSyncGoogleSheet = functions.https.onCall(async (params) => {
   const ctx = {idToken: params.idToken};
@@ -23,10 +24,16 @@ async function syncGoogleSheet(
   ctx: ExecutionContext,
 ): Promise<void> {
   const userClaims = await admin.auth().verifyIdToken(ctx.idToken);
+  const enabled = await isEnabled(ctx.idToken);
+
+  if (!enabled) {
+    return;
+  }
+
   const enabledAccounts = await getEnabledAccounts(userClaims.uid);
   const enabledAccountIds = new Set(enabledAccounts.map((doc) => doc.data().accountId));
   const txns = dedupTransactions(flatten(txnGetResps.map((r) => r.transactions)));
-  const enabledColumns = await getEnabledColumns(ctx.idToken);
+  const enabledColumns = Object.values(Column);
 
   const headers = enabledColumns.map(getColumnName);
 
@@ -54,14 +61,25 @@ async function syncGoogleSheet(
     version: "v4",
     auth: oauthClient
   });
+  const spreadsheetUrl = await getSpreadsheetUrl(ctx.idToken);
+  const sheetName = await getSheetName(ctx.idToken);
 
-  const sheet = await sheetsApi.spreadsheets.create({
-    requestBody: {}
+  if (spreadsheetUrl == null) {
+    throw new functions.https.HttpsError(
+      "failed-precondition",
+      "Spreadsheet URL is not found",
+    );
+  }
+
+  const spreadsheetId = getSpreadsheetId(spreadsheetUrl);
+
+  await sheetsApi.spreadsheets.values.clear({
+    spreadsheetId,
+    range: sheetName // Wipe out the whole sheet
   });
-
   await sheetsApi.spreadsheets.values.append({
-    spreadsheetId: sheet.data.spreadsheetId,
-    range: "Sheet1!A1:H1",
+    spreadsheetId,
+    range: sheetName,
     valueInputOption: "USER_ENTERED",
     requestBody: {
       majorDimension: "ROWS",

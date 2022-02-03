@@ -14,13 +14,13 @@ export default function GoogleSheetSync() {
 
   return <AuthenticatedOnly>
     { (user) =>
-      (<>
-        <Settings user={user} />
+      (<div>
         <OfflineGoogleAuthButton
           user={user}
           scope="https://www.googleapis.com/auth/spreadsheets" />
+        <Settings user={user} />
         <SyncSheetButton />
-      </>)
+      </div>)
     }
   </AuthenticatedOnly>;
 }

@@ -1,5 +1,6 @@
 import { User } from "firebase/auth";
 import { useCallback } from "react";
+import { Button } from "react-bootstrap";
 import { ffGetGoogleOfflineAuthLink } from "../../firebase-functions";
 import useScopeAuthorized from "../../lib/google-auth/useScopeAuthorized";
 
@@ -20,7 +21,7 @@ export default function OfflineGoogleAuthButton(props: Props): JSX.Element {
     errorHasScope,
   ] = useScopeAuthorized(props.user, props.scope);
 
-  return <button onClick={handleClick} disabled={hasScope || loadingHasScope}>
+  return <Button onClick={handleClick} disabled={hasScope || loadingHasScope}>
     {hasScope ? "Permission granted" : "Request permissions"}
-  </button>;
+  </Button>;
 }
