@@ -7,6 +7,8 @@ import { ExecutionContext } from "../../execution-context";
 import { getAuthenticatedClientX } from "../../google-auth";
 import { getEnabledAccounts, getTransactions } from "../../plaid-agent";
 import { dedupTransactions } from "../../plaid-agent/transactions";
+import { getColumnName, getColumnValue } from "./columns";
+import { getEnabledColumns } from "./settings";
 
 export const ffSyncGoogleSheet = functions.https.onCall(async (params) => {
   const ctx = {idToken: params.idToken};
@@ -24,28 +26,13 @@ async function syncGoogleSheet(
   const enabledAccounts = await getEnabledAccounts(userClaims.uid);
   const enabledAccountIds = new Set(enabledAccounts.map((doc) => doc.data().accountId));
   const txns = dedupTransactions(flatten(txnGetResps.map((r) => r.transactions)));
+  const enabledColumns = await getEnabledColumns(ctx.idToken);
 
-  const headers = [
-    "Name",
-    "Category",
-    "Date",
-    "Amount",
-    "Time",
-    "Merchant",
-    "Account ID"
-  ];
+  const headers = enabledColumns.map(getColumnName);
 
   const values = txns
     .filter((txn) => enabledAccountIds.has(txn.account_id))
-    .map((txn) => ([
-      txn.name,
-      (txn.category ?? []).join(","),
-      txn.authorized_date,
-      txn.amount,
-      txn.authorized_datetime,
-      txn.merchant_name,
-      txn.account_id
-    ]));
+    .map((txn) => enabledColumns.map((column) => getColumnValue(column, txn)));
 
   functions.logger.info("syncGoogleSheet", {
     uid: userClaims.uid,

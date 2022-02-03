@@ -2,7 +2,7 @@ import { Link, Outlet } from "react-router-dom";
 import cx from "classnames";
 
 import styles from "./index.module.scss";
-import GoogleAuthButton from "../../apps/GoogleSheetSync/GoogleAuthButton";
+import GoogleAuthButton from "../GoogleAuth/GoogleAuthButton";
 import PopulateDataButton from "./PopulateDataButton";
 
 export default function PageLayout(): JSX.Element {
