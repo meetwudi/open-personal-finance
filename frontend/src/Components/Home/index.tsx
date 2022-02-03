@@ -1,23 +1,17 @@
 import React, { useEffect, useContext, useCallback } from "react";
 
-import Header from "./Components/Headers";
-import Context from "./Context";
+import styles from "./index.module.scss";
 
-import styles from "./App.module.scss";
-
-// FIXME: Only import what's needed
-import "bootstrap/scss/bootstrap.scss";
-
-import { ffCreateLinkToken } from "./firebase-functions";
-import AccountSelection from "./Components/AccountSelection";
+import Context from "../../Context";
+import { getAuth, User } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { getAuth } from "firebase/auth";
-import GoogleAuthButton from "./Plugins/GoogleSheetSync/GoogleAuthButton";
-import GoogleSheetSync from "./Plugins/GoogleSheetSync";
-import AuthenticatedOnly from "./Components/AuthenticatedOnly";
-import PlaidConnect from "./Components/PlaidConnect";
+import { ffCreateLinkToken } from "../../firebase-functions";
+import AuthenticatedOnly from "../AuthenticatedOnly";
+import PlaidConnect from "../PlaidConnect";
+import AccountSelection from "../AccountSelection";
+import GoogleSheetSync from "../../apps/GoogleSheetSync";
 
-const App = (): JSX.Element => {
+const Home = (): JSX.Element => {
   const { dispatch } = useContext(Context);
   const [user, loadingUser, _errorUser] = useAuthState(getAuth());
 
@@ -72,31 +66,18 @@ const App = (): JSX.Element => {
     init();
   }, [dispatch, generateToken, user]);
 
-  if (loadingUser) {
-    return <div>Loading user ...</div>;
-  }
-  if (!user) {
-    return <GoogleAuthButton />;
-  }
-
   return (
-    <AuthenticatedOnly>
-      {(user) => <PlaidConnect user={user}>
-        <div className={styles.App}>
-          <div className={styles.container}>
-            <div>
-              <GoogleAuthButton />
-              <Header />
+    <AuthenticatedOnly fallback={<div>Not signed in</div>}>
+      {(user: User) =>
+        <PlaidConnect user={user}>
+          <div className={styles.App}>
+            <div className={styles.container}>
+              <AccountSelection />
             </div>
-            <AccountSelection />
-
-            {/* Plugins */}
-            <GoogleSheetSync />
           </div>
-        </div>
-      </PlaidConnect>}
+        </PlaidConnect>}
     </AuthenticatedOnly>
   );
 };
 
-export default App;
+export default Home;

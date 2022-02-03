@@ -2,6 +2,7 @@ import { Link, Outlet } from "react-router-dom";
 import cx from "classnames";
 
 import styles from "./index.module.scss";
+import GoogleAuthButton from "../../apps/GoogleSheetSync/GoogleAuthButton";
 
 export default function PageLayout(): JSX.Element {
   return <div className={cx("d-flex flex-row align-items-stretch", styles.pageContainer)}>
@@ -15,6 +16,9 @@ export default function PageLayout(): JSX.Element {
         </li>
         <li className="mb-2">
           <Link className="nav-link" to="/apps/google_sheet_sync">Google Sheet Sync</Link>
+        </li>
+        <li className="mb-2">
+          <GoogleAuthButton />
         </li>
       </ul>
     </div>

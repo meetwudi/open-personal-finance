@@ -98,6 +98,9 @@ exports.populateData = functions.https.onCall(async (params) => {
   );
 });
 
+// FIXME: I don't think this deserves a separate cloud function, but maybe
+//        make settings a writable sub-collection so it can be updated from
+//        the client.
 exports.updatePlaidAccountSettings = functions.https.onCall(async (params) => {
   const {idToken, accountId, accountEnabledGlobally} = params;
   const claims = await admin.auth().verifyIdToken(idToken);

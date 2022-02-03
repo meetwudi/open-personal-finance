@@ -1,6 +1,15 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    match /google_auth_credentials/{docId} {
+      // FIXME: Only allow access to scope field. Move accessToken and refreshToken to a private collection.
+      allow read: if resource.data.uid == request.auth.uid
+    }
+
+    match /plaid_items/{docId} {
+      allow read: if resource.data.uid == request.auth.uid
+    }
+
     match /plaid_financial_accounts/{docId} {
       allow read: if resource.data.uid == request.auth.uid
     }

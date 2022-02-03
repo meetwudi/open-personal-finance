@@ -3,9 +3,10 @@ import { useAuthState } from "react-firebase-hooks/auth";
 
 type Props = {
     children: (user: User) => JSX.Element,
+    fallback?: JSX.Element,
 }
 
-export default function AuthenticatedOnly({children}: Props): JSX.Element {
+export default function AuthenticatedOnly({children, fallback}: Props): JSX.Element {
   const [user, loadingUser, _errorUser] = useAuthState(getAuth());
 
   if (loadingUser) {
@@ -13,7 +14,7 @@ export default function AuthenticatedOnly({children}: Props): JSX.Element {
   }
 
   if (user == null) {
-    return <div>Unauthorized</div>;
+    return fallback ?? <div>Unauthenticated</div>;
   }
 
   return children(user);
