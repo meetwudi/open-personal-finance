@@ -4,11 +4,7 @@ import { first } from "lodash";
 import { COLLECTION_GOOGLE_AUTH_CREDENTIALS } from "./collections";
 import { Credentials } from "google-auth-library";
 
-// FIXME: Automatically call refreshTokens from a cloud task
-//        before the accessToken expires.
-
-// FIXME: Call refreshTokens when an API call fails, or figure out a
-//        way to send a preflight request to verify tokens
+// FIXME: Error handling when token refresh is broken
 
 /**
  * Attempt to refresh google access token for a specific user
@@ -19,7 +15,7 @@ export async function updateTokens(
   oldTokens: FirebaseFirestore.DocumentReference,
   newCredentials: Credentials
 ): Promise<void> {
-  await oldTokens.update({ newCredentials });
+  await oldTokens.update(newCredentials);
 }
 
 export async function getTokens(
