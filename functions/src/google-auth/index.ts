@@ -4,6 +4,6 @@ export {
 } from "./cloud-functions";
 
 export {
-  getTokens,
-  refreshTokens,
-} from "./tokens";
+  getGoogleOAuthClient,
+  getAuthenticatedClientX,
+} from "./client";

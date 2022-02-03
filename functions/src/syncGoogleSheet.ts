@@ -4,7 +4,7 @@ import { google } from "googleapis";
 import { flatten, sum } from "lodash";
 import { TransactionsGetResponse } from "plaid";
 import { ExecutionContext } from "./execution-context";
-import { getTokens } from "./google-auth";
+import { getAuthenticatedClientX } from "./google-auth";
 import { getEnabledAccounts } from "./plaid-agent/accounts";
 import { dedupTransactions } from "./plaid-agent/transactions";
 
@@ -51,18 +51,8 @@ export default async function syncGoogleSheet(
 
   values.unshift(headers);
 
-  const oauthClient = new google.auth.OAuth2();
-  const tokens = await getTokens(userClaims.uid);
-  if (tokens == null) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Google access token not found",
-      {
-        uid: userClaims,
-      });
-  }
+  const oauthClient = await getAuthenticatedClientX(ctx.idToken);
 
-  oauthClient.setCredentials(tokens);
   // FIXME: Figure out how tokens can be refreshed
   // https://github.com/googleapis/google-api-nodejs-client#handling-refresh-tokens
 
