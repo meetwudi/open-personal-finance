@@ -7,8 +7,6 @@
  * - `spreadsheetUrl` (string): URL to the Google Sheet.
  * - `sheetName` (string): Name of the sheet. Defaults to "Sheet1".
  *
- * Fields populated by OpenPF:
- * - `spreadsheetAccessible` (boolean): Can the backend service access the sheet
  */
 
 export const COLLECTION_APP_GSS_SETTINGS = "app_gss_settings";
