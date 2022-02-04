@@ -18,6 +18,10 @@ service cloud.firestore {
       allow read, write: if resource.data.uid == request.auth.uid
     }
 
+    match /cat_transform_configs/{docId} {
+      allow read, write: if resource.data.uid == request.auth.uid || request.resource.data.uid == request.auth.uid
+    }
+
     // apps/google-sheet-sync
     match /app_gss_settings/{docId} {
       allow read, write: if resource.data.uid == request.auth.uid || request.resource.data.uid == request.auth.uid

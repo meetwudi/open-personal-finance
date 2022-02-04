@@ -10,6 +10,7 @@ import AuthenticatedOnly from "../AuthenticatedOnly";
 import PlaidConnect from "../PlaidConnect";
 import AccountSelection from "../AccountSelection";
 import GoogleSheetSync from "../../apps/GoogleSheetSync";
+import CategoryTransform from "../CategoryTransform";
 
 const Home = (): JSX.Element => {
   const { dispatch } = useContext(Context);
@@ -72,7 +73,10 @@ const Home = (): JSX.Element => {
         <PlaidConnect user={user}>
           <div className={styles.App}>
             <div className={styles.container}>
+              <h3>Accounts config</h3>
               <AccountSelection />
+              <h3>Category rules</h3>
+              <CategoryTransform user={user} />
             </div>
           </div>
         </PlaidConnect>}

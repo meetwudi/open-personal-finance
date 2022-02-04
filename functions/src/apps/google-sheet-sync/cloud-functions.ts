@@ -7,6 +7,7 @@ import { ExecutionContext } from "../../execution-context";
 import { getAuthenticatedClientX } from "../../google-auth";
 import { getEnabledAccounts, getTransactions } from "../../plaid-agent";
 import { dedupTransactions } from "../../plaid-agent/transactions";
+import { transformCategories } from "../../transaction-category-transformations";
 import { Column, getColumnName, getColumnValue } from "./columns";
 import { getSheetName, getSpreadsheetUrl, isEnabled } from "./settings";
 import { getSpreadsheetId } from "./spreadsheet";
@@ -34,8 +35,9 @@ async function syncGoogleSheet(
   const enabledAccountIds = new Set(enabledAccounts.map((doc) => doc.data().accountId));
   const txns = dedupTransactions(flatten(txnGetResps.map((r) => r.transactions)));
   const enabledColumns = Object.values(Column);
-
   const headers = enabledColumns.map(getColumnName);
+
+  await Promise.all(txns.map((txn) => transformCategories(ctx.idToken, txn)));
 
   const values = txns
     .filter((txn) => enabledAccountIds.has(txn.account_id))
@@ -53,10 +55,6 @@ async function syncGoogleSheet(
   values.unshift(headers);
 
   const oauthClient = await getAuthenticatedClientX(ctx.idToken);
-
-  // FIXME: Figure out how tokens can be refreshed
-  // https://github.com/googleapis/google-api-nodejs-client#handling-refresh-tokens
-
   const sheetsApi = google.sheets({
     version: "v4",
     auth: oauthClient

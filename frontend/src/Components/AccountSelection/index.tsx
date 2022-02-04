@@ -14,6 +14,7 @@ function AccountSelectionAuthenticated({ user }: PropsAuthenticated) {
 
   const onChangeHandler = useCallback(async (e: React.ChangeEvent<HTMLInputElement>, accountId: string) => {
     const newValue = e.target.checked;
+    // FIXME: Directly update settings from clients
     await ffUpdatePlaidAccountSettings(accountId, newValue);
   }, []);
 
