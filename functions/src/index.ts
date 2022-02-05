@@ -2,6 +2,7 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { LinkTokenCreateRequest } from "plaid";
 import { ffSyncGoogleSheet } from "./apps/google-sheet-sync";
+import { ffSyncGoogleSheetSchedule } from "./apps/google-sheet-sync/cloud-functions";
 import { PRODUCT_CODE_NAME } from "./constants";
 import { ffGetGoogleOauthLink, ffReceiveGoogleOauthCode } from "./google-auth";
 import {
@@ -122,3 +123,4 @@ exports.ffReceiveGoogleOauthCode = ffReceiveGoogleOauthCode;
 
 // apps/google-sheet-sync
 exports.ffSyncGoogleSheet = ffSyncGoogleSheet;
+exports.ffSyncGoogleSheetSchedule = ffSyncGoogleSheetSchedule;

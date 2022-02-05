@@ -12,12 +12,11 @@ function mutateCategories(
   removeCategories.forEach((removeCategory) => categories.delete(removeCategory));
 }
 
-export async function transformCategories(idToken: string, transaction: Transaction): Promise<void> {
-  const userClaims = await admin.auth().verifyIdToken(idToken);
+export async function transformCategories(uid: string, transaction: Transaction): Promise<void> {
   // FIXME: Will this get called for every transaction? Figure out how caching works and
   //        perhaps we want to memorize the configs doc.
   const configsSnap = await admin.firestore().collection(COLLECTION_CAT_TRANSFORM_CONFIGS)
-    .where("uid", "==", userClaims.uid)
+    .where("uid", "==", uid)
     .get();
 
   const config = first(configsSnap.docs);

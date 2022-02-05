@@ -1,3 +1,3 @@
-export type ExecutionContext = {
+export type ExecutionContext = { // Deprecated
     idToken: string,
 }

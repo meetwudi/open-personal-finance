@@ -10,9 +10,9 @@ export function getGoogleOAuthClient() {
   );
 }
 
-export async function getAuthenticatedClientX(idToken: string) {
+export async function getAuthenticatedClientX(uid: string) {
   const client = getGoogleOAuthClient();
-  const tokens = await getTokensX(idToken);
+  const tokens = await getTokensX(uid);
   const existingAccessToken = tokens.data().access_token;
   client.setCredentials(tokens.data());
 
