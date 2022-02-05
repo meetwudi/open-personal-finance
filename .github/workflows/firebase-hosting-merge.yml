@@ -12,7 +12,7 @@ jobs:
     environment: deployment
     steps:
       - uses: actions/checkout@v2
-      - run: npm install && npm run build
+      - run: npm install && CI=false npm run build
         working-directory: frontend
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
