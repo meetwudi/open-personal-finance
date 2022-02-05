@@ -8,7 +8,7 @@ export type CategoryTransformConfig = {
     rules: [
         {
             id: string,
-            matchers: CategoryTransformMatcher,
+            matcher: CategoryTransformMatcher,
             addCategories: [string],
             removeCategories: [string],
         }
