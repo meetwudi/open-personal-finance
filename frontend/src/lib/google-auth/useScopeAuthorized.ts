@@ -1,5 +1,5 @@
 import { User } from "firebase/auth";
-import { collection, FirestoreError, getFirestore, query, QuerySnapshot, where } from "firebase/firestore";
+import { collection, FirestoreError, getFirestore, query, where } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { LoadingHook } from "react-firebase-hooks/firestore/dist/util";
 import { COLLECTION_GOOGLE_AUTH_CREDENTIALS } from "./constants";
