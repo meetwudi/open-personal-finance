@@ -18,7 +18,6 @@ function SettingsInner({ user, settings }: InnerProps): JSX.Element | null {
     }, settings.data() ?? {}),
   );
 
-  console.log(localSettings);
   const commitUpdate = useCallback(async () => {
     if (settings.exists()) {
       await updateDoc(settings.ref, localSettings);
