@@ -16,6 +16,7 @@ export default function PlaidConnect({children, user}: Props): JSX.Element {
   }
 
   if (items.empty) {
+    // FIXME: Implement Plaid account revalidation
     return <Header />;
   }
 
