@@ -2,7 +2,10 @@ import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI } from "./c
 import { google } from "googleapis";
 import { getTokensX, updateTokens } from "./tokens";
 
-export function getGoogleOAuthClient() {
+const dummyClient = new google.auth.OAuth2();
+type Client = typeof dummyClient;
+
+export function getGoogleOAuthClient(): Client {
   return new google.auth.OAuth2(
     GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET,
@@ -10,7 +13,7 @@ export function getGoogleOAuthClient() {
   );
 }
 
-export async function getAuthenticatedClientX(uid: string) {
+export async function getAuthenticatedClientX(uid: string): Promise<Client> {
   const client = getGoogleOAuthClient();
   const tokens = await getTokensX(uid);
   const existingAccessToken = tokens.data().access_token;
