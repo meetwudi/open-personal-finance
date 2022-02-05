@@ -11,7 +11,7 @@ service cloud.firestore {
     }
 
     match /plaid_financial_accounts/{docId} {
-      allow read: if resource.data.uid == request.auth.uid
+      allow read, write: if resource.data.uid == request.auth.uid || request.resource.data.uid == request.auth.uid
     }
 
     match /user_account_settings/{docId} {

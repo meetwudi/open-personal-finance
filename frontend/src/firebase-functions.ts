@@ -69,20 +69,6 @@ export async function ffSyncGoogleSheet(): Promise<any> {
   return result.data;
 }
 
-export async function ffUpdatePlaidAccountSettings(accountId: string, accountEnabledGlobally: boolean): Promise<any> {
-  const user = getAuth().currentUser;
-
-  if (user == null) {
-    throw new Error("User not logged in");
-  }
-
-  const idToken = await getIdToken(user);
-  const functions = getFunctions(getApp());
-  const fn = httpsCallable(functions, "updatePlaidAccountSettings");
-  const result = await fn({ idToken, accountId, accountEnabledGlobally });
-  return result.data;
-}
-
 export async function ffGetGoogleOfflineAuthLink(): Promise<any> {
   const user = getAuth().currentUser;
 

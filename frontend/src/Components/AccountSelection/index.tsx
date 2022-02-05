@@ -1,8 +1,8 @@
 import { getAuth, User } from "firebase/auth";
+import { QueryDocumentSnapshot, updateDoc } from "firebase/firestore";
 import React, { useCallback} from "react";
 import { Form } from "react-bootstrap";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { ffUpdatePlaidAccountSettings } from "../../firebase-functions";
 import usePlaidAccounts from "../../lib/plaid/usePlaidAccounts";
 
 type PropsAuthenticated = {
@@ -12,11 +12,17 @@ type PropsAuthenticated = {
 function AccountSelectionAuthenticated({ user }: PropsAuthenticated) {
   const [accounts, _loadingAccounts, _errorAccounts] = usePlaidAccounts(user.uid);
 
-  const onChangeHandler = useCallback(async (e: React.ChangeEvent<HTMLInputElement>, accountId: string) => {
-    const newValue = e.target.checked;
-    // FIXME: Directly update settings from clients
-    await ffUpdatePlaidAccountSettings(accountId, newValue);
-  }, []);
+  const onChangeHandler = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>,
+      account: QueryDocumentSnapshot
+    ) => {
+      await updateDoc(
+        account.ref,
+        {
+          accountEnabledGlobally: e.target.checked,
+        }
+      );
+    }, []);
 
   return <Form>
     {accounts?.docs.map((account) => <div key={account.data().accountId}>
@@ -25,7 +31,7 @@ function AccountSelectionAuthenticated({ user }: PropsAuthenticated) {
         id={account.data().accountId}
         label={account.data().officialName ?? account.data().name}
         checked={account.data().accountEnabledGlobally !== false}
-        onChange={(e) => onChangeHandler(e, account.data().accountId)}
+        onChange={(e) => onChangeHandler(e, account)}
       ></Form.Check>
     </div>)}
   </Form>;

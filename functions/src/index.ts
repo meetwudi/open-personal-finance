@@ -91,32 +91,6 @@ exports.populateData = functions.https.onCall(async (params) => {
   );
 });
 
-// FIXME: I don't think this deserves a separate cloud function, but maybe
-//        make settings a writable sub-collection so it can be updated from
-//        the client.
-exports.updatePlaidAccountSettings = functions.https.onCall(async (params) => {
-  const {idToken, accountId, accountEnabledGlobally} = params;
-  const claims = await admin.auth().verifyIdToken(idToken);
-
-  await admin.firestore().runTransaction(async (db) => {
-    const collection = admin.firestore()
-      .collection(COLLECTION_PLAID_FINANCIAL_ACCOUNTS);
-    const existingDocs = await db.get(collection
-      .where("uid", "==", claims.uid)
-      .where("accountId", "==", accountId));
-
-    if (existingDocs.empty) {
-      throw new functions.https.HttpsError("not-found", "account not found", {
-        accountId,
-        uid: claims.uid,
-      });
-    }
-
-    existingDocs.forEach(
-      (doc) => db.update(doc.ref, {accountEnabledGlobally}));
-  });
-});
-
 // google-auth
 exports.ffGetGoogleOauthLink = ffGetGoogleOauthLink;
 exports.ffReceiveGoogleOauthCode = ffReceiveGoogleOauthCode;
